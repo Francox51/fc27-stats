@@ -5,7 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 from fc_clubs_api import FC27API
 
-CLUB_NAME = "Azertyteam"
+CLUB_NAME = "AZERTYTEAM"
 PLATFORM = "common-gen5"
 TIMEZONE = "Europe/Paris"
 MATCH_TYPE = "leagueMatch"
@@ -14,6 +14,8 @@ MATCHS_JSON = Path("matchs_fc27.json")
 JOUEURS_JSON = Path("joueurs_matchs_fc27.json")
 MATCHS_CSV = Path("matchs_fc27.csv")
 JOUEURS_CSV = Path("joueurs_matchs_fc27.csv")
+BRUT_MATCHS_JSON = Path("brut_matchs.json")
+BRUT_JOUEURS_JSON = Path("brut_joueurs.json")
 
 
 def serialize_value(val):
@@ -65,6 +67,12 @@ def main():
 
     new_matches = api.get_club_matches(club_id, match_type=MATCH_TYPE, count=10) or []
     new_players = api.get_match_players(club_id, match_type=MATCH_TYPE, count=10, both_teams=False) or []
+
+    with open(BRUT_MATCHS_JSON, "w", encoding="utf-8") as f:
+        json.dump(new_matches, f, indent=2, ensure_ascii=False, default=serialize_value)
+
+    with open(BRUT_JOUEURS_JSON, "w", encoding="utf-8") as f:
+        json.dump(new_players, f, indent=2, ensure_ascii=False, default=serialize_value)
 
     existing_matches = load_json_list(MATCHS_JSON)
     seen_matches = {match_key(m) for m in existing_matches}
