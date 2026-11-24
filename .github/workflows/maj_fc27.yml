@@ -1,0 +1,39 @@
+name: Mise a jour FC 27
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 */2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python et fc-clubs-api
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dependances
+        run: pip install fc-clubs-api==0.3.0
+
+      - name: Executer la mise a jour sans doublons
+        run: python maj_fc27.py
+
+      - name: Commit et push des donnees mises a jour
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add matchs_fc27.json joueurs_matchs_fc27.json matchs_fc27.csv joueurs_matchs_fc27.csv
+          if git diff --staged --quiet; then
+            echo "Aucun nouveau match a enregistrer."
+          else
+            git commit -m "chore: mise a jour stats FC 27"
+            git push
+          fi
