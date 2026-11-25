@@ -84,7 +84,7 @@
             <h1 class="font-display text-lg font-bold tracking-tight text-white sm:text-xl">EA FC 27 CLUBS</h1>
             <span class="rounded-md bg-volt/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-volt border border-volt/30">Analytics</span>
           </div>
-          <p id="clubSubtitle" class="text-xs text-slate-400">Données de démonstration — Importe ton fichier matchs_fc27.json ci-dessous</p>
+          <p id="clubSubtitle" class="text-xs text-slate-400">Chargement automatique de matchs_fc27.json...</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@
         </button>
         <button id="btnReset" type="button" class="hidden inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/10">
           <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
-          Réinitialiser
+          Recharger JSON
         </button>
       </div>
     </div>
@@ -116,7 +116,7 @@
       <div class="flex items-center gap-2.5">
         <i data-lucide="info" class="h-4 w-4 shrink-0 text-amber-400"></i>
         <span>
-          <strong>Données de démonstration actives</strong> — Glisse simplement ton fichier <code class="rounded bg-black/30 px-1.5 py-0.5 text-volt">matchs_fc27.json</code> ci-dessous (il contient déjà tous tes matchs et tes joueurs !).
+          <strong>Données de démonstration actives</strong> — Vérifie que <code class="rounded bg-black/30 px-1.5 py-0.5 text-volt">matchs_fc27.json</code> est bien à la racine du dépôt ou importe-le ci-dessous.
         </span>
       </div>
     </div>
@@ -127,10 +127,10 @@
         <div>
           <h2 class="font-display text-base font-bold text-white sm:text-lg flex items-center gap-2">
             <i data-lucide="folder-up" class="h-5 w-5 text-volt"></i>
-            Importer tes données (<code class="text-xs text-volt">matchs_fc27.json</code>)
+            Source des données (<code class="text-xs text-volt">matchs_fc27.json</code>)
           </h2>
           <p class="mt-1 text-xs text-slate-400 sm:text-sm">
-            Il suffit de sélectionner <code class="rounded bg-white/5 px-1.5 py-0.5 text-slate-200">matchs_fc27.json</code> depuis <code class="rounded bg-white/5 px-1.5 py-0.5 text-slate-300">C:\Users\franc</code> (les stats clubs et joueurs sont déjà intégrées dedans).
+            Chargement automatique depuis <code class="rounded bg-white/5 px-1.5 py-0.5 text-slate-200">Francox51/fc27-stats</code> à l'ouverture. Tu peux aussi glisser un fichier local ici en secours.
           </p>
         </div>
 
@@ -154,7 +154,7 @@
           <i data-lucide="upload-cloud" class="h-6 w-6"></i>
         </div>
         <p class="mt-2.5 text-sm font-semibold text-white">
-          Clique ici ou glisse <span class="text-volt">matchs_fc27.json</span>
+          Clique ici ou glisse <span class="text-volt">matchs_fc27.json</span> en import manuel
         </p>
         <p class="mt-1 text-xs text-slate-400">
           Extraction automatique des scores, stats collectives, notes et performances individuelles
@@ -367,12 +367,18 @@
   </main>
 
   <script>
+    // --- CONFIGURATION DU CHARGEMENT AUTOMATIQUE ---
+    const AUTO_JSON_URLS = [
+      './matchs_fc27.json',
+      'https://raw.githubusercontent.com/Francox51/fc27-stats/main/matchs_fc27.json',
+    ];
+
     // --- ÉTAT GLOBAL ---
     const state = {
       isDemo: true,
       rawMatches: [],
       rawExternalPlayers: [],
-      detectedClubs: [], // [{ id, name, count }]
+      detectedClubs: [],
       selectedClubId: null,
       matches: [],
       normalizedPlayers: [],
@@ -470,6 +476,67 @@
       box.textContent = message;
     }
 
+    function extractRowsFromParsedJson(parsed) {
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.matches)) return parsed.matches;
+        if (Array.isArray(parsed.data)) return parsed.data;
+        if (parsed.clubs || parsed.players) return [parsed];
+        return Object.values(parsed);
+      }
+      return [];
+    }
+
+    function applyRawMatchRows(rows, sourceLabel = 'matchs_fc27.json') {
+      if (!Array.isArray(rows) || rows.length === 0) return false;
+      state.isDemo = false;
+      state.rawMatches = rows;
+      state.rawExternalPlayers = [];
+      state.detectedClubs = detectClubsInRawMatches(state.rawMatches);
+      state.selectedClubId = state.detectedClubs[0]?.id || null;
+      state.selectedMatchId = null;
+
+      updateClubSelectorUI();
+      refreshAll();
+
+      const clubLabel = state.detectedClubs[0]
+        ? `${state.detectedClubs[0].name} (ID ${state.detectedClubs[0].id})`
+        : 'ton club';
+      showToast(
+        `${sourceLabel} chargé : ${state.matches.length} matchs et ${state.playersSummary.length} joueurs analysés pour ${clubLabel}.`,
+        'success'
+      );
+      return true;
+    }
+
+    async function autoLoadMatchData() {
+      const cacheBust = `t=${Date.now()}`;
+
+      for (const baseUrl of AUTO_JSON_URLS) {
+        try {
+          const separator = baseUrl.includes('?') ? '&' : '?';
+          const url = `${baseUrl}${separator}${cacheBust}`;
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) continue;
+
+          const parsed = await response.json();
+          const rows = extractRowsFromParsedJson(parsed);
+          if (applyRawMatchRows(rows, 'matchs_fc27.json')) {
+            return;
+          }
+        } catch (err) {
+          console.warn('Tentative de chargement auto échouée pour', baseUrl, err);
+        }
+      }
+
+      // Si aucun fichier JSON n'est accessible, basculer proprement sur les données de démonstration
+      loadDemoData();
+      showToast(
+        'Fichier matchs_fc27.json non détecté automatiquement : affichage des données de démonstration.',
+        'info'
+      );
+    }
+
     // --- PARSING DE LA STRUCTURE RÉELLE EA / FC-CLUBS-API ---
     function extractClubNameFromEntry(clubId, clubObj) {
       if (!clubObj || typeof clubObj !== 'object') return `Club #${clubId}`;
@@ -518,7 +585,6 @@
         ? Object.values(playersDict)
         : Array.isArray(playersDict) ? playersDict : [];
 
-      // Calcul des totaux joueurs en secours
       let sumPlayerGoals = 0;
       let sumPlayerShots = 0;
       let sumPlayerPassesMade = 0;
@@ -540,7 +606,6 @@
         }
       });
 
-      // Priorité : clubs[id].goals -> aggregate[id].goals -> somme des buts joueurs
       let goals = null;
       if (cInfo.goals !== undefined && cInfo.goals !== null && cInfo.goals !== '') {
         goals = toNum(cInfo.goals, 0);
@@ -583,7 +648,6 @@
         const ts = getTimestampMs(rawTs);
         const dateLabel = formatDate(rawTs);
 
-        // Cas 1 : Structure imbriquée EA réelle (clubs / players / aggregate par clubId)
         if ((m.clubs && typeof m.clubs === 'object') || (m.players && typeof m.players === 'object')) {
           const allClubIds = Array.from(
             new Set([
@@ -631,7 +695,6 @@
             oppStats,
           });
 
-          // Extraire les joueurs de notre club pour ce match
           if (m.players && myClubId && m.players[myClubId]) {
             const pObj = m.players[myClubId];
             const entries = Array.isArray(pObj)
@@ -659,7 +722,6 @@
             });
           }
         } else {
-          // Cas 2 : Format plat (CSV ou JSON simplifié)
           const gf = toNum(m.goals ?? m.goals_for ?? m.gf, 0);
           const ga = toNum(m.goals_against ?? m.goalsAgainst ?? m.ga, 0);
           let outcome = 'D';
@@ -688,7 +750,6 @@
         }
       });
 
-      // Si un fichier joueurs externe (joueurs_matchs_fc27) a aussi été importé et qu'on n'a pas encore de joueurs
       if (parsedPlayers.length === 0 && state.rawExternalPlayers.length > 0) {
         state.rawExternalPlayers.forEach((p, idx) => {
           const matchId = String(p.matchId ?? p.match_id ?? p.id ?? `match_${idx + 1}`);
@@ -783,15 +844,7 @@
 
           if (file.name.toLowerCase().endsWith('.json')) {
             const parsed = JSON.parse(text);
-            if (Array.isArray(parsed)) {
-              rows = parsed;
-            } else if (parsed && typeof parsed === 'object') {
-              // Au cas où EA renvoie un objet dictionnaire { matchId: { ... } } ou { matches: [...] }
-              if (Array.isArray(parsed.matches)) rows = parsed.matches;
-              else if (Array.isArray(parsed.data)) rows = parsed.data;
-              else if (parsed.clubs || parsed.players) rows = [parsed];
-              else rows = Object.values(parsed);
-            }
+            rows = extractRowsFromParsedJson(parsed);
           } else if (file.name.toLowerCase().endsWith('.csv')) {
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             rows = parsed.data || [];
@@ -868,14 +921,13 @@
         state.selectedMatchId = state.matches[0].id;
       }
 
-      // Bandeau démo & boutons
       const demoBanner = document.getElementById('demoBanner');
       const btnReset = document.getElementById('btnReset');
       if (state.isDemo) {
         demoBanner.classList.remove('hidden');
         btnReset.classList.add('hidden');
         document.getElementById('clubSubtitle').textContent =
-          "Données de démonstration — Importe ton fichier matchs_fc27.json ci-dessous";
+          'Données de démonstration — Importe ton fichier matchs_fc27.json ci-dessous';
       } else {
         demoBanner.classList.add('hidden');
         btnReset.classList.remove('hidden');
@@ -885,7 +937,6 @@
           : `${state.matches.length} matchs et ${state.playersSummary.length} joueurs analysés`;
       }
 
-      // Badges statut
       const sm = document.getElementById('statusMatches');
       const sp = document.getElementById('statusPlayers');
       sm.innerHTML = `<span class="h-2 w-2 rounded-full ${state.isDemo ? 'bg-amber-400' : 'bg-volt'}"></span> Matchs : <strong class="text-white">${state.matches.length}</strong>${state.isDemo ? ' (démo)' : ''}`;
@@ -925,7 +976,6 @@
       diffEl.className = `font-semibold ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
       document.getElementById('kpiAvgGoals').textContent = `${total > 0 ? (gf / total).toFixed(1) : '0.0'} buts/m`;
 
-      // Note moyenne & MVP
       const ratedPlayers = state.playersSummary.filter((p) => p.avgRating > 0);
       if (ratedPlayers.length > 0) {
         const teamAvg = ratedPlayers.reduce((acc, p) => acc + p.avgRating, 0) / ratedPlayers.length;
@@ -937,7 +987,6 @@
         document.getElementById('kpiTopPlayer').textContent = 'Aucune note disponible';
       }
 
-      // Précision des passes & Tacles réussis (depuis stats matchs ou somme joueurs)
       let totalPassesMade = mList.reduce((acc, m) => acc + (m.myStats?.passesMade || 0), 0);
       let totalPassAttempts = mList.reduce((acc, m) => acc + (m.myStats?.passAttempts || 0), 0);
       if (totalPassAttempts === 0 && state.playersSummary.length > 0) {
@@ -958,7 +1007,6 @@
       document.getElementById('kpiTackleAcc').textContent = tackleAcc;
       document.getElementById('kpiTackleVolume').textContent = `${totalTacklesMade} / ${totalTackleAttempts} tacles`;
 
-      // Bandeau série récente au-dessus du graphique
       const formStrip = document.getElementById('formStrip');
       formStrip.innerHTML = '';
       mList.slice(0, 6).forEach((m) => {
@@ -1228,7 +1276,6 @@
         .filter((p) => p.matchId === matchId)
         .sort((a, b) => b.rating - a.rating);
 
-      // Bloc comparatif collectif (Nous vs Adversaire)
       let teamCompareHtml = '';
       if (match.myStats) {
         const my = match.myStats;
@@ -1417,7 +1464,7 @@
       document.getElementById('btnReset').addEventListener('click', () => {
         fileInput.value = '';
         document.getElementById('toastBox').classList.add('hidden');
-        loadDemoData();
+        autoLoadMatchData();
       });
 
       document.getElementById('playerChartMetric').addEventListener('change', renderPlayersChart);
@@ -1443,8 +1490,8 @@
         });
       });
 
-      // Précharger les données de démonstration au démarrage
-      loadDemoData();
+      // Charger automatiquement matchs_fc27.json au démarrage
+      autoLoadMatchData();
     });
   </script>
 </body>
