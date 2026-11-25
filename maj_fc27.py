@@ -143,6 +143,9 @@ def main():
         print("Clés match :", list(new_matches[0].keys()))
     if new_players:
         print("Clés joueur :", list(new_players[0].keys()))
+    print("Méthodes disponibles sur api :", [m for m in dir(api) if not m.startswith("_")])
+    if new_matches:
+        pprint.pprint(new_matches[0])
 
     existing_matches = load_json_list(MATCHS_JSON)
     seen_matches = {match_key(m) for m in existing_matches}
