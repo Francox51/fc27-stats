@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EA FC 27 Clubs — Centre Analytique</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts : Inter & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- PapaParse pour lecture fiable des CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            pitch: {
+              950: '#070b12',
+              900: '#0d1421',
+              800: '#141f33',
+              700: '#1e2d4a',
+            },
+            volt: '#a3e635',
+            cyanfc: '#22d3ee',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      background-color: #070b12;
+      color: #f1f5f9;
+    }
+    .glass-card {
+      background: linear-gradient(145deg, rgba(20, 31, 51, 0.88), rgba(13, 20, 33, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+    .drop-active {
+      border-color: #a3e635 !important;
+      background-color: rgba(163, 230, 53, 0.08) !important;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1421;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e2d4a;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-volt selection:text-pitch-950">
+
+  <!-- Barre supérieure -->
+  <header class="sticky top-0 z-30 border-b border-white/10 bg-pitch-950/90 backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-volt to-emerald-500 text-pitch-950 shadow-lg shadow-volt/20">
+          <i data-lucide="trophy" class="h-5 w-5 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display text-lg font-bold tracking-tight text-white sm:text-xl">EA FC 27 CLUBS</h1>
+            <span class="rounded-md bg-volt/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-volt border border-volt/30">Analytics</span>
+          </div>
+          <p id="clubSubtitle" class="text-xs text-slate-400">Chargement automatique de matchs_fc27.json &amp; joueurs_matchs_fc27.json...</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Sélecteur de Club détecté -->
+        <div id="clubSelectorWrapper" class="hidden items-center gap-2 rounded-xl border border-white/10 bg-pitch-900 px-3 py-1.5">
+          <i data-lucide="shield-check" class="h-4 w-4 text-volt"></i>
+          <label for="clubSelect" class="text-[11px] font-medium text-slate-400">Club :</label>
+          <select id="clubSelect" class="bg-transparent text-xs font-semibold text-white focus:outline-none">
+          </select>
+        </div>
+
+        <button id="btnDemo" type="button" class="inline-flex items-center gap-2 rounded-xl border border-cyanfc/30 bg-cyanfc/10 px-3.5 py-2 text-xs font-semibold text-cyanfc transition hover:bg-cyanfc/20 active:scale-[0.99]">
+          <i data-lucide="sparkles" class="h-4 w-4"></i>
+          Données démo
+        </button>
+        <button id="btnReset" type="button" class="hidden inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/10">
+          <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+          Recharger JSON
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+
+    <!-- Bandeau mode démo -->
+    <div id="demoBanner" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-xs text-amber-200">
+      <div class="flex items-center gap-2.5">
+        <i data-lucide="info" class="h-4 w-4 shrink-0 text-amber-400"></i>
+        <span>
+          <strong>Données de démonstration actives</strong> — Vérifie que <code class="rounded bg-black/30 px-1.5 py-0.5 text-volt">matchs_fc27.json</code> et <code class="rounded bg-black/30 px-1.5 py-0.5 text-cyanfc">joueurs_matchs_fc27.json</code> sont à la racine du dépôt ou importe-les ci-dessous.
+        </span>
+      </div>
+    </div>
+
+    <!-- Zone d'importation des fichiers -->
+    <section id="importSection" class="glass-card rounded-2xl p-5 sm:p-6">
+      <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div>
+          <h2 class="font-display text-base font-bold text-white sm:text-lg flex items-center gap-2">
+            <i data-lucide="folder-up" class="h-5 w-5 text-volt"></i>
+            Source des données (<code class="text-xs text-volt">matchs_fc27.json</code> &amp; <code class="text-xs text-cyanfc">joueurs_matchs_fc27.json</code>)
+          </h2>
+          <p class="mt-1 text-xs text-slate-400 sm:text-sm">
+            Chargement automatique depuis <code class="rounded bg-white/5 px-1.5 py-0.5 text-slate-200">Francox51/fc27-stats</code> à l'ouverture. Tu peux aussi glisser tes fichiers locaux ici en secours.
+          </p>
+        </div>
+
+        <!-- Badges d'état des fichiers chargés -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="statusMatches" class="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-pitch-900 px-3 py-1.5 text-xs text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-slate-600"></span>
+            Matchs : démo
+          </span>
+          <span id="statusPlayers" class="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-pitch-900 px-3 py-1.5 text-xs text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-slate-600"></span>
+            Joueurs : démo
+          </span>
+        </div>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="dropZone" class="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/15 bg-pitch-900/60 px-4 py-6 text-center transition hover:border-volt/60 hover:bg-pitch-900">
+        <input id="fileInput" type="file" accept=".json,.csv" multiple class="hidden" />
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-volt/10 text-volt">
+          <i data-lucide="upload-cloud" class="h-6 w-6"></i>
+        </div>
+        <p class="mt-2.5 text-sm font-semibold text-white">
+          Clique ici ou glisse <span class="text-volt">matchs_fc27.json</span> et <span class="text-cyanfc">joueurs_matchs_fc27.json</span> en import manuel
+        </p>
+        <p class="mt-1 text-xs text-slate-400">
+          Extraction automatique des scores, efficacité par 90 min, précision aux tirs et performances individuelles
+        </p>
+      </div>
+
+      <!-- Zone de message / notification -->
+      <div id="toastBox" class="mt-3 hidden rounded-xl border px-4 py-2.5 text-xs font-medium"></div>
+    </section>
+
+    <!-- Contenu principal du Dashboard -->
+    <div id="dashboardContent" class="space-y-6">
+
+      <!-- 6 KPIs Principaux -->
+      <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <!-- 1. Bilan Global -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Bilan Global</span>
+            <i data-lucide="shield" class="h-4 w-4 text-volt"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiMatches" class="font-display text-3xl font-bold text-white">0</span>
+            <span class="text-xs text-slate-400">matchs</span>
+          </div>
+          <div class="mt-3 flex items-center gap-1.5 text-xs font-semibold">
+            <span id="kpiWins" class="rounded-md bg-emerald-500/20 px-2 py-0.5 text-emerald-400">0V</span>
+            <span id="kpiDraws" class="rounded-md bg-amber-500/20 px-2 py-0.5 text-amber-400">0N</span>
+            <span id="kpiLosses" class="rounded-md bg-rose-500/20 px-2 py-0.5 text-rose-400">0D</span>
+            <span id="kpiWinRate" class="ml-auto text-slate-300">0%</span>
+          </div>
+        </div>
+
+        <!-- 2. Buts Marqués / Encaissés -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Buts Pour / Contre</span>
+            <i data-lucide="goal" class="h-4 w-4 text-cyanfc"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiGoalsFor" class="font-display text-3xl font-bold text-white">0</span>
+            <span class="text-sm text-slate-400">/</span>
+            <span id="kpiGoalsAgainst" class="font-display text-2xl font-semibold text-slate-300">0</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs">
+            <span id="kpiGoalDiff" class="font-semibold text-emerald-400">Diff : 0</span>
+            <span id="kpiAvgGoals" class="text-slate-400">0.0 buts/m</span>
+          </div>
+        </div>
+
+        <!-- 3. Carte KPI Efficacité Offensive -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Efficacité</span>
+            <i data-lucide="crosshair" class="h-4 w-4 text-volt"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiShotEff" class="font-display text-3xl font-bold text-volt">—</span>
+            <span class="text-xs text-slate-400">buts/tir</span>
+          </div>
+          <p id="kpiGaPerMatch" class="mt-3 truncate text-xs text-slate-400">G+A/m : 0.00</p>
+        </div>
+
+        <!-- 4. Note moyenne équipe -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Note Moy.</span>
+            <i data-lucide="star" class="h-4 w-4 text-amber-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiAvgRating" class="font-display text-3xl font-bold text-white">—</span>
+            <span class="text-xs text-slate-400">/ 10</span>
+          </div>
+          <p id="kpiTopPlayer" class="mt-3 truncate text-xs text-slate-400">Top note : —</p>
+        </div>
+
+        <!-- 5. Précision des passes -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Précision Passes</span>
+            <i data-lucide="share-2" class="h-4 w-4 text-purple-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiPassAcc" class="font-display text-3xl font-bold text-white">—</span>
+            <span class="text-xs text-slate-400">réussite</span>
+          </div>
+          <p id="kpiPassVolume" class="mt-3 truncate text-xs text-slate-400">0 / 0 passes</p>
+        </div>
+
+        <!-- 6. Taux de tacles réussis -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium uppercase tracking-wider">Tacles Réussis</span>
+            <i data-lucide="swords" class="h-4 w-4 text-emerald-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiTackleAcc" class="font-display text-3xl font-bold text-white">—</span>
+            <span class="text-xs text-slate-400">duels</span>
+          </div>
+          <p id="kpiTackleVolume" class="mt-3 truncate text-xs text-slate-400">0 / 0 tacles</p>
+        </div>
+      </section>
+
+      <!-- Graphiques -->
+      <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Évolution Buts Marqués vs Encaissés -->
+        <div class="glass-card rounded-2xl p-5">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h3 class="font-display text-base font-bold text-white">Évolution des Scores</h3>
+              <p class="text-xs text-slate-400">Buts marqués vs buts encaissés par match (ordre chronologique)</p>
+            </div>
+            <div id="formStrip" class="flex items-center gap-1"></div>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="matchesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Comparatif Joueurs -->
+        <div class="glass-card rounded-2xl p-5">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="font-display text-base font-bold text-white">Comparatif des Joueurs</h3>
+              <p class="text-xs text-slate-400">Performances cumulées, moyennes ou efficacité par 90 min</p>
+            </div>
+            <select id="playerChartMetric" class="rounded-xl border border-white/10 bg-pitch-900 px-3 py-1.5 text-xs font-medium text-white focus:border-volt focus:outline-none">
+              <option value="avgRating">Note Moyenne (/10)</option>
+              <option value="gaPer90">Efficacité G+A / 90 min</option>
+              <option value="shotPct">Précision Tirs (%)</option>
+              <option value="ga">Buts + Passes D. (G+A)</option>
+              <option value="goals">Buts Marqués</option>
+              <option value="assists">Passes Décisives</option>
+              <option value="shots">Tirs Totaux</option>
+              <option value="passPct">Précision Passes (%)</option>
+              <option value="tacklesMade">Tacles Réussis</option>
+            </select>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="playersChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tableau Classement & Stats des Joueurs -->
+      <section class="glass-card rounded-2xl p-5">
+        <div class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h3 class="font-display text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="users" class="h-4 w-4 text-volt"></i>
+              Statistiques Individuelles des Joueurs
+            </h3>
+            <p class="text-xs text-slate-400">Clique sur une colonne pour trier l'effectif</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative">
+              <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"></i>
+              <input id="playerSearch" type="text" placeholder="Rechercher un joueur..." class="w-44 rounded-xl border border-white/10 bg-pitch-900 py-1.5 pl-8 pr-3 text-xs text-white placeholder-slate-500 focus:border-volt focus:outline-none sm:w-52" />
+            </div>
+            <select id="posFilter" class="rounded-xl border border-white/10 bg-pitch-900 px-3 py-1.5 text-xs text-white focus:border-volt focus:outline-none">
+              <option value="ALL">Tous les postes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-white/10">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-pitch-900/90 text-[11px] uppercase tracking-wider text-slate-400">
+              <tr>
+                <th class="cursor-pointer px-4 py-3 hover:text-white" data-sort="name">Joueur</th>
+                <th class="cursor-pointer px-3 py-3 hover:text-white" data-sort="position">Poste</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="apps">MJ</th>
+                <th class="cursor-pointer px-3 py-3 text-center text-volt hover:text-white" data-sort="avgRating">Note ↓</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="goals">Buts</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="assists">Passes D.</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="ga">G+A</th>
+                <th class="cursor-pointer px-3 py-3 text-center text-cyanfc hover:text-white" data-sort="gaPer90">G+A/90</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="shots">Tirs</th>
+                <th class="cursor-pointer px-3 py-3 text-center text-volt hover:text-white" data-sort="shotPct">% Tir</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="passPct">Passes (Réuss./Tent.)</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="tacklePct">Tacles (Réuss./Tent.)</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="cleanSheet">CS</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="redCards">CR</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="saves">Arrêts</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="mom">HDM</th>
+              </tr>
+            </thead>
+            <tbody id="playersTableBody" class="divide-y divide-white/5 bg-pitch-950/40">
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Historique des Matchs & Feuille de match -->
+      <section class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <!-- Liste des matchs -->
+        <div class="glass-card rounded-2xl p-5 lg:col-span-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h3 class="font-display text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar-days" class="h-4 w-4 text-cyanfc"></i>
+                Historique des Rencontres
+              </h3>
+              <p class="text-xs text-slate-400">Clique sur une rencontre pour afficher la feuille de match complète</p>
+            </div>
+          </div>
+          <div id="matchesList" class="space-y-2.5">
+          </div>
+        </div>
+
+        <!-- Détail du match sélectionné -->
+        <div class="glass-card rounded-2xl p-5 lg:col-span-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h3 class="font-display text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="h-4 w-4 text-volt"></i>
+                Feuille de Match
+              </h3>
+              <p id="selectedMatchSubtitle" class="text-xs text-slate-400">Comparatif collectif &amp; notes individuelles</p>
+            </div>
+          </div>
+
+          <div id="matchDetailBox" class="space-y-4">
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // --- CONFIGURATION DU CHARGEMENT AUTOMATIQUE ---
+    const AUTO_MATCHES_URLS = [
+      './matchs_fc27.json',
+      'https://raw.githubusercontent.com/Francox51/fc27-stats/main/matchs_fc27.json',
+    ];
+
+    const AUTO_PLAYERS_URLS = [
+      './joueurs_matchs_fc27.json',
+      'https://raw.githubusercontent.com/Francox51/fc27-stats/main/joueurs_matchs_fc27.json',
+    ];
+
+    // --- ÉTAT GLOBAL ---
+    const state = {
+      isDemo: true,
+      rawMatches: [],
+      rawExternalPlayers: [],
+      detectedClubs: [],
+      selectedClubId: null,
+      matches: [],
+      normalizedPlayers: [],
+      playersSummary: [],
+      selectedMatchId: null,
+      sortKey: 'avgRating',
+      sortDir: 'desc',
+      searchQuery: '',
+      posFilter: 'ALL',
+      charts: {
+        matches: null,
+        players: null,
+      },
+    };
+
+    // --- UTILITAIRES ---
+    function toNum(val, fallback = 0) {
+      if (val === null || val === undefined || val === '') return fallback;
+      if (typeof val === 'number') return Number.isFinite(val) ? val : fallback;
+      const cleaned = String(val).replace('%', '').replace(',', '.').trim();
+      const parsed = parseFloat(cleaned);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function translatePos(rawPos) {
+      if (!rawPos) return 'POLY';
+      const p = String(rawPos).toLowerCase().trim();
+      const map = {
+        forward: 'ATT',
+        striker: 'BU',
+        midfielder: 'MIL',
+        defender: 'DÉF',
+        goalkeeper: 'GB',
+        gk: 'GB',
+        st: 'BU',
+        cf: 'AT',
+        lw: 'AG',
+        rw: 'AD',
+        cam: 'MOC',
+        cm: 'MC',
+        cdm: 'MDC',
+        lm: 'MG',
+        rm: 'MD',
+        cb: 'DC',
+        lb: 'DG',
+        rb: 'DD',
+        lwb: 'DLG',
+        rwb: 'DLD',
+      };
+      return map[p] || p.toUpperCase();
+    }
+
+    function formatDate(raw) {
+      if (!raw) return 'Date récente';
+      if (typeof raw === 'number' || /^\d+$/.test(String(raw))) {
+        const num = Number(raw);
+        const ms = num < 1e12 ? num * 1000 : num;
+        const d = new Date(ms);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+      }
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      }
+      return String(raw);
+    }
+
+    function getTimestampMs(raw) {
+      if (!raw) return 0;
+      if (typeof raw === 'number' || /^\d+$/.test(String(raw))) {
+        const num = Number(raw);
+        return num < 1e12 ? num * 1000 : num;
+      }
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+
+    function showToast(message, type = 'info') {
+      const box = document.getElementById('toastBox');
+      box.classList.remove(
+        'hidden',
+        'border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-300',
+        'border-rose-500/30', 'bg-rose-500/10', 'text-rose-300',
+        'border-cyanfc/30', 'bg-cyanfc/10', 'text-cyanfc'
+      );
+      if (type === 'success') {
+        box.classList.add('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-300');
+      } else if (type === 'error') {
+        box.classList.add('border-rose-500/30', 'bg-rose-500/10', 'text-rose-300');
+      } else {
+        box.classList.add('border-cyanfc/30', 'bg-cyanfc/10', 'text-cyanfc');
+      }
+      box.textContent = message;
+    }
+
+    function extractRowsFromParsedJson(parsed) {
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.matches)) return parsed.matches;
+        if (Array.isArray(parsed.players)) return parsed.players;
+        if (Array.isArray(parsed.data)) return parsed.data;
+        if (parsed.clubs || parsed.aggregate) return [parsed];
+        return Object.values(parsed);
+      }
+      return [];
+    }
+
+    async function fetchJsonRowsFromUrls(urls) {
+      const cacheBust = `t=${Date.now()}`;
+      for (const baseUrl of urls) {
+        try {
+          const separator = baseUrl.includes('?') ? '&' : '?';
+          const url = `${baseUrl}${separator}${cacheBust}`;
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) continue;
+          const parsed = await response.json();
+          const rows = extractRowsFromParsedJson(parsed);
+          if (Array.isArray(rows) && rows.length > 0) {
+            return rows;
+          }
+        } catch (err) {
+          console.warn('Tentative de chargement auto échouée pour', baseUrl, err);
+        }
+      }
+      return null;
+    }
+
+    async function autoLoadMatchData() {
+      const [matchRows, playerRows] = await Promise.all([
+        fetchJsonRowsFromUrls(AUTO_MATCHES_URLS),
+        fetchJsonRowsFromUrls(AUTO_PLAYERS_URLS),
+      ]);
+
+      if (matchRows && matchRows.length > 0) {
+        state.isDemo = false;
+        state.rawMatches = matchRows;
+        state.rawExternalPlayers = Array.isArray(playerRows) ? playerRows : [];
+        state.detectedClubs = detectClubsInRawMatches(state.rawMatches);
+        state.selectedClubId = state.detectedClubs[0]?.id || null;
+        state.selectedMatchId = null;
+
+        updateClubSelectorUI();
+        refreshAll();
+
+        const clubLabel = state.detectedClubs[0]
+          ? `${state.detectedClubs[0].name} (ID ${state.detectedClubs[0].id})`
+          : 'ton club';
+        const playerInfo = state.playersSummary.length > 0
+          ? `${state.playersSummary.length} joueurs (joueurs_matchs_fc27.json)`
+          : '0 joueur (joueurs_matchs_fc27.json non trouvé)';
+        showToast(
+          `Données chargées : ${state.matches.length} matchs et ${playerInfo} pour ${clubLabel}.`,
+          'success'
+        );
+        return;
+      }
+
+      loadDemoData();
+      showToast(
+        'Fichier matchs_fc27.json non détecté automatiquement : affichage des données de démonstration.',
+        'info'
+      );
+    }
+
+    // --- PARSING DE LA STRUCTURE RÉELLE EA / FICHIERS PLATS ---
+    function extractClubNameFromEntry(clubId, clubObj) {
+      if (!clubObj || typeof clubObj !== 'object') return `Club #${clubId}`;
+      if (clubObj.details && clubObj.details.name) return String(clubObj.details.name);
+      if (clubObj.name) return String(clubObj.name);
+      if (clubObj.clubName) return String(clubObj.clubName);
+      return `Club #${clubId}`;
+    }
+
+    function detectClubsInRawMatches(rawMatches) {
+      const counts = new Map();
+      rawMatches.forEach((m) => {
+        if (!m || typeof m !== 'object') return;
+
+        // Format plat (matchs_fc27.json)
+        if (m.clubId !== undefined && m.clubId !== null) {
+          const cid = String(m.clubId);
+          const name = String(m.clubName || `Club #${cid}`);
+          if (!counts.has(cid)) {
+            counts.set(cid, { id: cid, name, count: 0 });
+          }
+          const entry = counts.get(cid);
+          entry.count += 1;
+          if (entry.name.startsWith('Club #') && !name.startsWith('Club #')) {
+            entry.name = name;
+          }
+        }
+
+        // Format imbriqué EA
+        const clubIds = new Set();
+        if (m.clubs && typeof m.clubs === 'object') {
+          Object.keys(m.clubs).forEach((cid) => clubIds.add(String(cid)));
+        }
+        if (m.players && typeof m.players === 'object') {
+          Object.keys(m.players).forEach((cid) => clubIds.add(String(cid)));
+        }
+        if (m.aggregate && typeof m.aggregate === 'object') {
+          Object.keys(m.aggregate).forEach((cid) => clubIds.add(String(cid)));
+        }
+
+        clubIds.forEach((cid) => {
+          const cObj = m.clubs ? m.clubs[cid] : null;
+          const name = extractClubNameFromEntry(cid, cObj);
+          if (!counts.has(cid)) {
+            counts.set(cid, { id: cid, name, count: 0 });
+          }
+          const entry = counts.get(cid);
+          entry.count += 1;
+          if (entry.name.startsWith('Club #') && !name.startsWith('Club #')) {
+            entry.name = name;
+          }
+        });
+      });
+
+      return Array.from(counts.values()).sort((a, b) => b.count - a.count);
+    }
+
+    function computeClubMatchStats(matchObj, clubId) {
+      const cInfo = (matchObj.clubs && matchObj.clubs[clubId]) || {};
+      const aggInfo = (matchObj.aggregate && matchObj.aggregate[clubId]) || {};
+      const playersDict = (matchObj.players && matchObj.players[clubId]) || {};
+      const playerEntries = typeof playersDict === 'object' && !Array.isArray(playersDict)
+        ? Object.values(playersDict)
+        : Array.isArray(playersDict) ? playersDict : [];
+
+      let sumPlayerGoals = 0;
+      let sumPlayerShots = 0;
+      let sumPlayerPassesMade = 0;
+      let sumPlayerPassAttempts = 0;
+      let sumPlayerTacklesMade = 0;
+      let sumPlayerTackleAttempts = 0;
+      let maxGoalsConceded = null;
+
+      playerEntries.forEach((p) => {
+        sumPlayerGoals += toNum(p.goals, 0);
+        sumPlayerShots += toNum(p.shots, 0);
+        sumPlayerPassesMade += toNum(p.passesMade ?? p.passesmade ?? p.passes_made, 0);
+        sumPlayerPassAttempts += toNum(p.passAttempts ?? p.passattempts ?? p.pass_attempts, 0);
+        sumPlayerTacklesMade += toNum(p.tacklesMade ?? p.tacklesmade ?? p.tackles_made, 0);
+        sumPlayerTackleAttempts += toNum(p.tackleAttempts ?? p.tackleattempts ?? p.tackle_attempts, 0);
+        if (p.goalsconceded !== undefined && p.goalsconceded !== null) {
+          const gc = toNum(p.goalsconceded, 0);
+          if (maxGoalsConceded === null || gc > maxGoalsConceded) maxGoalsConceded = gc;
+        }
+      });
+
+      let goals = null;
+      if (cInfo.goals !== undefined && cInfo.goals !== null && cInfo.goals !== '') {
+        goals = toNum(cInfo.goals, 0);
+      } else if (aggInfo.goals !== undefined && aggInfo.goals !== null && aggInfo.goals !== '') {
+        goals = toNum(aggInfo.goals, 0);
+      } else {
+        goals = sumPlayerGoals;
+      }
+
+      const shots = toNum(cInfo.shots ?? aggInfo.shots, sumPlayerShots);
+      const passesMade = toNum(cInfo.passesMade ?? cInfo.passesmade ?? aggInfo.passesmade, sumPlayerPassesMade);
+      const passAttempts = toNum(cInfo.passAttempts ?? cInfo.passattempts ?? aggInfo.passattempts, sumPlayerPassAttempts);
+      const tacklesMade = toNum(cInfo.tacklesMade ?? cInfo.tacklesmade ?? aggInfo.tacklesmade, sumPlayerTacklesMade);
+      const tackleAttempts = toNum(cInfo.tackleAttempts ?? cInfo.tackleattempts ?? aggInfo.tackleattempts, sumPlayerTackleAttempts);
+
+      return {
+        clubId,
+        name: extractClubNameFromEntry(clubId, cInfo),
+        goals,
+        goalsAgainstHint: cInfo.goalsAgainst !== undefined ? toNum(cInfo.goalsAgainst, null) : maxGoalsConceded,
+        winsFlag: toNum(cInfo.wins, null),
+        lossesFlag: toNum(cInfo.losses, null),
+        tiesFlag: toNum(cInfo.ties, null),
+        shots,
+        passesMade,
+        passAttempts,
+        tacklesMade,
+        tackleAttempts,
+        playerEntries,
+      };
+    }
+
+    function normalizePlayerRow(p, matchIdFallback = '', indexFallback = 0) {
+      const momVal = p.manOfTheMatch ?? p.mom ?? p.man_of_the_match ?? 0;
+      return {
+        matchId: String(p.matchId ?? p.match_id ?? matchIdFallback),
+        clubId: p.clubId !== undefined && p.clubId !== null ? String(p.clubId) : null,
+        playerId: String(p.playerId ?? p.player_id ?? indexFallback),
+        name: String(p.name ?? p.playername ?? p.player_name ?? `Joueur #${indexFallback + 1}`),
+        position: translatePos(p.position ?? p.pos),
+        rating: toNum(p.rating, 0),
+        goals: toNum(p.goals, 0),
+        assists: toNum(p.assists, 0),
+        shots: toNum(p.shots, 0),
+        passesMade: toNum(p.passesMade ?? p.passesmade ?? p.passes_made, 0),
+        passAttempts: toNum(p.passAttempts ?? p.passattempts ?? p.pass_attempts, 0),
+        tacklesMade: toNum(p.tacklesMade ?? p.tacklesmade ?? p.tackles_made, 0),
+        tackleAttempts: toNum(p.tackleAttempts ?? p.tackleattempts ?? p.tackle_attempts, 0),
+        saves: toNum(p.saves, 0),
+        cleanSheet: toNum(p.cleanSheet ?? p.cleansheet ?? p.clean_sheet, 0),
+        redCards: toNum(p.redCards ?? p.redcards ?? p.red_cards, 0),
+        secondsPlayed: Math.max(0, toNum(p.secondsPlayed ?? p.secondsplayed ?? p.seconds_played, 0)),
+        mom: momVal === true || momVal === 1 || String(momVal) === '1' ? 1 : 0,
+      };
+    }
+
+    function parseMatchesAndPlayers() {
+      const parsedMatches = [];
+      const parsedPlayers = [];
+
+      state.rawMatches.forEach((m, index) => {
+        const matchId = String(m.matchId ?? m.match_id ?? m.id ?? `match_${index + 1}`);
+        const rawTs = m.timestamp ?? m.match_date ?? m.date ?? null;
+        const ts = getTimestampMs(rawTs);
+        const dateLabel = formatDate(rawTs);
+
+        if ((m.clubs && typeof m.clubs === 'object') || (m.players && typeof m.players === 'object')) {
+          const allClubIds = Array.from(
+            new Set([
+              ...Object.keys(m.clubs || {}),
+              ...Object.keys(m.players || {}),
+              ...Object.keys(m.aggregate || {}),
+            ])
+          ).map(String);
+
+          const myClubId = state.selectedClubId && allClubIds.includes(state.selectedClubId)
+            ? state.selectedClubId
+            : allClubIds[0];
+          const oppClubId = allClubIds.find((id) => id !== myClubId) || null;
+
+          const myStats = myClubId ? computeClubMatchStats(m, myClubId) : null;
+          const oppStats = oppClubId ? computeClubMatchStats(m, oppClubId) : null;
+
+          const gf = myStats ? myStats.goals : 0;
+          let ga = 0;
+          if (oppStats) {
+            ga = oppStats.goals;
+          } else if (myStats && myStats.goalsAgainstHint !== null) {
+            ga = myStats.goalsAgainstHint;
+          }
+
+          let outcome = 'D';
+          if (gf > ga) outcome = 'W';
+          else if (gf < ga) outcome = 'L';
+          else if (myStats) {
+            if (myStats.winsFlag === 1) outcome = 'W';
+            else if (myStats.lossesFlag === 1) outcome = 'L';
+          }
+
+          parsedMatches.push({
+            id: matchId,
+            ts,
+            dateLabel,
+            matchType: m.matchType || m.match_type || '',
+            dnf: Boolean(m.dnf),
+            crestUrl: m.crestUrl || '',
+            opponentCrestUrl: m.opponentCrestUrl || '',
+            myClubId,
+            myClubName: myStats ? myStats.name : 'Mon Club',
+            opponentName: oppStats ? oppStats.name : (oppClubId ? `Club #${oppClubId}` : 'Adversaire'),
+            gf,
+            ga,
+            outcome,
+            myStats,
+            oppStats,
+          });
+
+          if (m.players && myClubId && m.players[myClubId]) {
+            const pObj = m.players[myClubId];
+            const entries = Array.isArray(pObj)
+              ? pObj.map((item, i) => [item.playerId || item.player_id || `p_${i}`, item])
+              : Object.entries(pObj);
+
+            entries.forEach(([pid, p], pIdx) => {
+              parsedPlayers.push(normalizePlayerRow({ ...p, playerId: pid, clubId: myClubId }, matchId, pIdx));
+            });
+          }
+        } else {
+          // Format plat de matchs_fc27.json
+          const gf = toNum(m.goals ?? m.goals_for ?? m.gf, 0);
+          const ga = toNum(m.goalsAgainst ?? m.goals_against ?? m.ga, 0);
+          let outcome = 'D';
+          if (typeof m.result === 'string') {
+            const r = m.result.toLowerCase().trim();
+            if (r === 'win' || r === 'w' || r === 'victoire') outcome = 'W';
+            else if (r === 'loss' || r === 'l' || r === 'defaite' || r === 'défaite') outcome = 'L';
+            else if (r === 'tie' || r === 'draw' || r === 'd' || r === 'n' || r === 'nul') outcome = 'D';
+          } else if (gf > ga) {
+            outcome = 'W';
+          } else if (gf < ga) {
+            outcome = 'L';
+          }
+
+          const rowClubId = m.clubId !== undefined && m.clubId !== null ? String(m.clubId) : 'club';
+
+          parsedMatches.push({
+            id: matchId,
+            ts,
+            dateLabel,
+            matchType: m.matchType || m.match_type || '',
+            dnf: Boolean(m.dnf),
+            crestUrl: m.crestUrl || '',
+            opponentCrestUrl: m.opponentCrestUrl || '',
+            myClubId: rowClubId,
+            myClubName: m.clubName || m.club_name || 'AZERTYTEAM',
+            opponentName: m.opponentName || m.opponent_name || m.opponent || 'Adversaire',
+            gf,
+            ga,
+            outcome,
+            myStats: null,
+            oppStats: null,
+          });
+        }
+      });
+
+      // Associer les lignes de joueurs_matchs_fc27.json aux matchs
+      if (state.rawExternalPlayers.length > 0) {
+        const matchMap = new Map(parsedMatches.map((m) => [m.id, m]));
+
+        state.rawExternalPlayers.forEach((p, idx) => {
+          const norm = normalizePlayerRow(p, '', idx);
+          if (state.selectedClubId && norm.clubId && norm.clubId !== state.selectedClubId) {
+            return;
+          }
+          parsedPlayers.push(norm);
+
+          // Agréger les stats collectives du match si myStats n'est pas encore renseigné
+          const targetMatch = matchMap.get(norm.matchId);
+          if (targetMatch && !targetMatch.myStats) {
+            targetMatch.myStats = {
+              clubId: targetMatch.myClubId,
+              name: targetMatch.myClubName,
+              goals: targetMatch.gf,
+              shots: 0,
+              passesMade: 0,
+              passAttempts: 0,
+              tacklesMade: 0,
+              tackleAttempts: 0,
+            };
+          }
+          if (targetMatch && targetMatch.myStats) {
+            targetMatch.myStats.shots += norm.shots;
+            targetMatch.myStats.passesMade += norm.passesMade;
+            targetMatch.myStats.passAttempts += norm.passAttempts;
+            targetMatch.myStats.tacklesMade += norm.tacklesMade;
+            targetMatch.myStats.tackleAttempts += norm.tackleAttempts;
+          }
+        });
+      }
+
+      // Trier les matchs du plus récent au plus ancien
+      parsedMatches.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      state.matches = parsedMatches;
+      state.normalizedPlayers = parsedPlayers;
+
+      // Agrégation par joueur
+      const byPlayer = new Map();
+      parsedPlayers.forEach((p) => {
+        if (!byPlayer.has(p.name)) {
+          byPlayer.set(p.name, {
+            name: p.name,
+            positions: {},
+            apps: 0,
+            ratingSum: 0,
+            ratingCount: 0,
+            goals: 0,
+            assists: 0,
+            shots: 0,
+            passesMade: 0,
+            passAttempts: 0,
+            tacklesMade: 0,
+            tackleAttempts: 0,
+            saves: 0,
+            cleanSheet: 0,
+            redCards: 0,
+            secondsPlayed: 0,
+            mom: 0,
+          });
+        }
+        const agg = byPlayer.get(p.name);
+        agg.apps += 1;
+        if (p.rating > 0) {
+          agg.ratingSum += p.rating;
+          agg.ratingCount += 1;
+        }
+        agg.goals += p.goals;
+        agg.assists += p.assists;
+        agg.shots += p.shots;
+        agg.passesMade += p.passesMade;
+        agg.passAttempts += p.passAttempts;
+        agg.tacklesMade += p.tacklesMade;
+        agg.tackleAttempts += p.tackleAttempts;
+        agg.saves += p.saves;
+        agg.cleanSheet += p.cleanSheet;
+        agg.redCards += p.redCards;
+        agg.secondsPlayed += p.secondsPlayed;
+        agg.mom += p.mom;
+        if (p.position) {
+          agg.positions[p.position] = (agg.positions[p.position] || 0) + 1;
+        }
+      });
+
+      state.playersSummary = Array.from(byPlayer.values()).map((p) => {
+        const mainPos = Object.entries(p.positions).sort((a, b) => b[1] - a[1])[0]?.[0] || 'POLY';
+        const ga = p.goals + p.assists;
+        const gaPer90 = p.secondsPlayed > 0 ? (ga / p.secondsPlayed) * 5400 : 0;
+        const shotPct = p.shots > 0 ? (p.goals / p.shots) * 100 : 0;
+        const passPct = p.passAttempts > 0 ? (p.passesMade / p.passAttempts) * 100 : 0;
+        const tacklePct = p.tackleAttempts > 0 ? (p.tacklesMade / p.tackleAttempts) * 100 : 0;
+
+        return {
+          ...p,
+          position: mainPos,
+          avgRating: p.ratingCount > 0 ? p.ratingSum / p.ratingCount : 0,
+          ga,
+          gaPer90,
+          shotPct,
+          passPct,
+          tacklePct,
+        };
+      });
+    }
+
+    // --- IMPORTATION DE FICHIERS ---
+    async function handleFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      let importedAny = false;
+
+      for (const file of files) {
+        try {
+          const text = await file.text();
+          let rows = [];
+
+          if (file.name.toLowerCase().endsWith('.json')) {
+            const parsed = JSON.parse(text);
+            rows = extractRowsFromParsedJson(parsed);
+          } else if (file.name.toLowerCase().endsWith('.csv')) {
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            rows = parsed.data || [];
+          } else {
+            showToast(`Format non pris en charge (${file.name}). Utilise .json ou .csv.`, 'error');
+            continue;
+          }
+
+          if (!rows.length) continue;
+
+          const first = rows[0];
+          const isNestedMatchFile = first && typeof first === 'object' && (first.clubs || first.players || first.aggregate);
+          const isPlayerFlatFile =
+            !isNestedMatchFile &&
+            (file.name.toLowerCase().includes('joueur') ||
+              file.name.toLowerCase().includes('player') ||
+              Object.keys(first).some((k) => ['playername', 'player_name', 'playerid', 'secondsplayed', 'rating'].includes(k.toLowerCase())));
+
+          if (isPlayerFlatFile) {
+            state.rawExternalPlayers = rows;
+          } else {
+            state.rawMatches = rows;
+          }
+          importedAny = true;
+        } catch (err) {
+          console.error(err);
+          showToast(`Erreur de lecture sur ${file.name} : ${err.message}`, 'error');
+        }
+      }
+
+      if (importedAny) {
+        state.isDemo = false;
+        state.detectedClubs = detectClubsInRawMatches(state.rawMatches);
+        state.selectedClubId = state.detectedClubs[0]?.id || null;
+        state.selectedMatchId = null;
+
+        updateClubSelectorUI();
+        refreshAll();
+
+        const clubLabel = state.detectedClubs[0]
+          ? `${state.detectedClubs[0].name} (ID ${state.detectedClubs[0].id})`
+          : 'ton club';
+        showToast(
+          `Données chargées avec succès : ${state.matches.length} matchs et ${state.playersSummary.length} joueurs analysés pour ${clubLabel}.`,
+          'success'
+        );
+      }
+    }
+
+    function updateClubSelectorUI() {
+      const wrapper = document.getElementById('clubSelectorWrapper');
+      const select = document.getElementById('clubSelect');
+
+      if (state.detectedClubs.length > 0) {
+        wrapper.classList.remove('hidden');
+        wrapper.classList.add('flex');
+        select.innerHTML = state.detectedClubs
+          .map(
+            (c) =>
+              `<option value="${c.id}" ${c.id === state.selectedClubId ? 'selected' : ''}>${c.name} (#${c.id} • ${c.count}m)</option>`
+          )
+          .join('');
+      } else {
+        wrapper.classList.add('hidden');
+        wrapper.classList.remove('flex');
+      }
+    }
+
+    function refreshAll() {
+      parseMatchesAndPlayers();
+
+      if (!state.selectedMatchId && state.matches.length > 0) {
+        state.selectedMatchId = state.matches[0].id;
+      }
+
+      const demoBanner = document.getElementById('demoBanner');
+      const btnReset = document.getElementById('btnReset');
+      if (state.isDemo) {
+        demoBanner.classList.remove('hidden');
+        btnReset.classList.add('hidden');
+        document.getElementById('clubSubtitle').textContent =
+          'Données de démonstration — Importe tes fichiers JSON ci-dessous';
+      } else {
+        demoBanner.classList.add('hidden');
+        btnReset.classList.remove('hidden');
+        const activeClub = state.detectedClubs.find((c) => c.id === state.selectedClubId);
+        document.getElementById('clubSubtitle').textContent = activeClub
+          ? `${activeClub.name} (ID ${activeClub.id}) • ${state.matches.length} matchs • ${state.playersSummary.length} joueurs`
+          : `${state.matches.length} matchs et ${state.playersSummary.length} joueurs analysés`;
+      }
+
+      const sm = document.getElementById('statusMatches');
+      const sp = document.getElementById('statusPlayers');
+      sm.innerHTML = `<span class="h-2 w-2 rounded-full ${state.isDemo ? 'bg-amber-400' : 'bg-volt'}"></span> Matchs : <strong class="text-white">${state.matches.length}</strong>${state.isDemo ? ' (démo)' : ''}`;
+      sp.innerHTML = `<span class="h-2 w-2 rounded-full ${state.isDemo ? 'bg-amber-400' : 'bg-cyanfc'}"></span> Joueurs : <strong class="text-white">${state.playersSummary.length}</strong>${state.isDemo ? ' (démo)' : ''}`;
+
+      renderKPIs();
+      renderCharts();
+      populatePositionFilter();
+      renderPlayersTable();
+      renderMatchesList();
+      renderMatchDetail(state.selectedMatchId);
+    }
+
+    // --- RENDU DES 6 KPIs ---
+    function renderKPIs() {
+      const mList = state.matches;
+      const total = mList.length;
+      const wins = mList.filter((m) => m.outcome === 'W').length;
+      const draws = mList.filter((m) => m.outcome === 'D').length;
+      const losses = mList.filter((m) => m.outcome === 'L').length;
+      const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+      const gf = mList.reduce((acc, m) => acc + m.gf, 0);
+      const ga = mList.reduce((acc, m) => acc + m.ga, 0);
+      const diff = gf - ga;
+
+      document.getElementById('kpiMatches').textContent = total;
+      document.getElementById('kpiWins').textContent = `${wins}V`;
+      document.getElementById('kpiDraws').textContent = `${draws}N`;
+      document.getElementById('kpiLosses').textContent = `${losses}D`;
+      document.getElementById('kpiWinRate').textContent = `${winRate}%`;
+
+      document.getElementById('kpiGoalsFor').textContent = gf;
+      document.getElementById('kpiGoalsAgainst').textContent = ga;
+      const diffEl = document.getElementById('kpiGoalDiff');
+      diffEl.textContent = `Diff : ${diff > 0 ? '+' + diff : diff}`;
+      diffEl.className = `font-semibold ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      document.getElementById('kpiAvgGoals').textContent = `${total > 0 ? (gf / total).toFixed(1) : '0.0'} buts/m`;
+
+      // Carte KPI Efficacité (% buts / tirs & G+A / match)
+      let totalShots = mList.reduce((acc, m) => acc + (m.myStats?.shots || 0), 0);
+      if (totalShots === 0 && state.playersSummary.length > 0) {
+        totalShots = state.playersSummary.reduce((acc, p) => acc + p.shots, 0);
+      }
+      const totalGaPlayers = state.playersSummary.reduce((acc, p) => acc + p.ga, 0);
+      const shotEffText = totalShots > 0 ? ((gf / totalShots) * 100).toFixed(1) + '%' : '—';
+      const gaPerMatchText = total > 0 ? (totalGaPlayers / total).toFixed(2) : '0.00';
+      document.getElementById('kpiShotEff').textContent = shotEffText;
+      document.getElementById('kpiGaPerMatch').textContent = `G+A/m : ${gaPerMatchText} (${gf}/${totalShots} tirs)`;
+
+      const ratedPlayers = state.playersSummary.filter((p) => p.avgRating > 0);
+      if (ratedPlayers.length > 0) {
+        const teamAvg = ratedPlayers.reduce((acc, p) => acc + p.avgRating, 0) / ratedPlayers.length;
+        const mvp = [...ratedPlayers].sort((a, b) => b.avgRating - a.avgRating)[0];
+        document.getElementById('kpiAvgRating').textContent = teamAvg.toFixed(2);
+        document.getElementById('kpiTopPlayer').textContent = `Top : ${mvp.name} (${mvp.avgRating.toFixed(2)})`;
+      } else {
+        document.getElementById('kpiAvgRating').textContent = '—';
+        document.getElementById('kpiTopPlayer').textContent = 'Aucune note disponible';
+      }
+
+      let totalPassesMade = mList.reduce((acc, m) => acc + (m.myStats?.passesMade || 0), 0);
+      let totalPassAttempts = mList.reduce((acc, m) => acc + (m.myStats?.passAttempts || 0), 0);
+      if (totalPassAttempts === 0 && state.playersSummary.length > 0) {
+        totalPassesMade = state.playersSummary.reduce((acc, p) => acc + p.passesMade, 0);
+        totalPassAttempts = state.playersSummary.reduce((acc, p) => acc + p.passAttempts, 0);
+      }
+      const passAcc = totalPassAttempts > 0 ? ((totalPassesMade / totalPassAttempts) * 100).toFixed(1) + '%' : '—';
+      document.getElementById('kpiPassAcc').textContent = passAcc;
+      document.getElementById('kpiPassVolume').textContent = `${totalPassesMade} / ${totalPassAttempts} passes`;
+
+      let totalTacklesMade = mList.reduce((acc, m) => acc + (m.myStats?.tacklesMade || 0), 0);
+      let totalTackleAttempts = mList.reduce((acc, m) => acc + (m.myStats?.tackleAttempts || 0), 0);
+      if (totalTackleAttempts === 0 && state.playersSummary.length > 0) {
+        totalTacklesMade = state.playersSummary.reduce((acc, p) => acc + p.tacklesMade, 0);
+        totalTackleAttempts = state.playersSummary.reduce((acc, p) => acc + p.tackleAttempts, 0);
+      }
+      const tackleAcc = totalTackleAttempts > 0 ? ((totalTacklesMade / totalTackleAttempts) * 100).toFixed(1) + '%' : '—';
+      document.getElementById('kpiTackleAcc').textContent = tackleAcc;
+      document.getElementById('kpiTackleVolume').textContent = `${totalTacklesMade} / ${totalTackleAttempts} tacles`;
+
+      const formStrip = document.getElementById('formStrip');
+      formStrip.innerHTML = '';
+      mList.slice(0, 6).forEach((m) => {
+        const span = document.createElement('span');
+        const map = {
+          W: { label: 'V', cls: 'bg-emerald-500 text-pitch-950' },
+          D: { label: 'N', cls: 'bg-amber-400 text-pitch-950' },
+          L: { label: 'D', cls: 'bg-rose-500 text-white' },
+        };
+        const cfg = map[m.outcome] || map.D;
+        span.className = `flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold ${cfg.cls}`;
+        span.textContent = cfg.label;
+        span.title = `${m.gf}-${m.ga} vs ${m.opponentName}`;
+        formStrip.appendChild(span);
+      });
+    }
+
+    // --- GRAPHIQUES ---
+    function renderCharts() {
+      const chronoMatches = [...state.matches].reverse();
+      const labels = chronoMatches.map((m, idx) => `M${idx + 1} (${m.gf}-${m.ga})`);
+      const gfData = chronoMatches.map((m) => m.gf);
+      const gaData = chronoMatches.map((m) => m.ga);
+
+      if (state.charts.matches) state.charts.matches.destroy();
+      const ctxMatches = document.getElementById('matchesChart').getContext('2d');
+      state.charts.matches = new Chart(ctxMatches, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Buts marqués',
+              data: gfData,
+              backgroundColor: '#a3e635',
+              borderRadius: 6,
+            },
+            {
+              label: 'Buts encaissés',
+              data: gaData,
+              backgroundColor: '#f43f5e',
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } },
+          },
+          scales: {
+            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          },
+        },
+      });
+
+      renderPlayersChart();
+    }
+
+    function renderPlayersChart() {
+      const metric = document.getElementById('playerChartMetric').value;
+      const metricConfig = {
+        avgRating: { label: 'Note Moyenne (/10)', key: 'avgRating', color: '#a3e635', max: 10 },
+        gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' },
+        shotPct: { label: 'Précision Tirs (%)', key: 'shotPct', color: '#a3e635', max: 100 },
+        ga: { label: 'Buts + Passes D.', key: 'ga', color: '#22d3ee' },
+        goals: { label: 'Buts Marqués', key: 'goals', color: '#34d399' },
+        assists: { label: 'Passes Décisives', key: 'assists', color: '#38bdf8' },
+        shots: { label: 'Tirs Totaux', key: 'shots', color: '#f59e0b' },
+        passPct: { label: 'Précision Passes (%)', key: 'passPct', color: '#a78bfa', max: 100 },
+        tacklesMade: { label: 'Tacles Réussis', key: 'tacklesMade', color: '#fb7185' },
+      };
+      const cfg = metricConfig[metric] || metricConfig.avgRating;
+      const topPlayers = [...state.playersSummary]
+        .sort((a, b) => b[cfg.key] - a[cfg.key])
+        .slice(0, 8);
+
+      if (state.charts.players) state.charts.players.destroy();
+      const ctxPlayers = document.getElementById('playersChart').getContext('2d');
+      state.charts.players = new Chart(ctxPlayers, {
+        type: 'bar',
+        data: {
+          labels: topPlayers.map((p) => p.name),
+          datasets: [
+            {
+              label: cfg.label,
+              data: topPlayers.map((p) => Number(p[cfg.key].toFixed(2))),
+              backgroundColor: cfg.color,
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: cfg.max,
+              ticks: { color: '#94a3b8', font: { size: 10 } },
+              grid: { color: 'rgba(255,255,255,0.06)' },
+            },
+            y: {
+              ticks: { color: '#e2e8f0', font: { size: 11, weight: '600' } },
+              grid: { display: false },
+            },
+          },
+        },
+      });
+    }
+
+    // --- TABLEAU JOUEURS ---
+    function populatePositionFilter() {
+      const select = document.getElementById('posFilter');
+      const current = select.value;
+      const positions = Array.from(new Set(state.playersSummary.map((p) => p.position))).filter(Boolean);
+      select.innerHTML = '<option value="ALL">Tous les postes</option>';
+      positions.forEach((pos) => {
+        const opt = document.createElement('option');
+        opt.value = pos;
+        opt.textContent = pos;
+        select.appendChild(opt);
+      });
+      if (positions.includes(current)) select.value = current;
+    }
+
+    function renderPlayersTable() {
+      const tbody = document.getElementById('playersTableBody');
+      let list = [...state.playersSummary];
+
+      if (state.searchQuery) {
+        const q = state.searchQuery.toLowerCase();
+        list = list.filter((p) => p.name.toLowerCase().includes(q));
+      }
+      if (state.posFilter !== 'ALL') {
+        list = list.filter((p) => p.position === state.posFilter);
+      }
+
+      list.sort((a, b) => {
+        const valA = a[state.sortKey];
+        const valB = b[state.sortKey];
+        if (typeof valA === 'string') {
+          return state.sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return state.sortDir === 'asc' ? valA - valB : valB - valA;
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-6 text-center text-slate-400">Aucun joueur trouvé pour ce filtre.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list
+        .map((p) => {
+          const ratingBadge =
+            p.avgRating >= 8.5
+              ? 'bg-volt/20 text-volt border-volt/40'
+              : p.avgRating >= 7.5
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              : 'bg-white/10 text-slate-200 border-white/15';
+
+          const gaPer90Display =
+            p.secondsPlayed > 0
+              ? `<span class="font-semibold text-cyanfc">${p.gaPer90.toFixed(2)}</span>`
+              : '<span class="text-slate-600">—</span>';
+
+          const shotPctDisplay =
+            p.shots > 0
+              ? `<span class="font-semibold text-volt">${p.shotPct.toFixed(0)}%</span>`
+              : '<span class="text-slate-600">—</span>';
+
+          const passDisplay =
+            p.passAttempts > 0
+              ? `<span class="font-semibold text-white">${p.passPct.toFixed(0)}%</span> <span class="text-slate-400">(${p.passesMade}/${p.passAttempts})</span>`
+              : `${p.passesMade}`;
+
+          const tackleDisplay =
+            p.tackleAttempts > 0
+              ? `<span class="font-semibold text-white">${p.tacklePct.toFixed(0)}%</span> <span class="text-slate-400">(${p.tacklesMade}/${p.tackleAttempts})</span>`
+              : `${p.tacklesMade}`;
+
+          return `
+            <tr class="transition hover:bg-white/[0.03]">
+              <td class="px-4 py-3 font-semibold text-white">${p.name}</td>
+              <td class="px-3 py-3"><span class="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">${p.position}</span></td>
+              <td class="px-3 py-3 text-center text-slate-300">${p.apps}</td>
+              <td class="px-3 py-3 text-center">
+                <span class="inline-block rounded-lg border px-2 py-0.5 font-display font-bold ${ratingBadge}">
+                  ${p.avgRating > 0 ? p.avgRating.toFixed(2) : '—'}
+                </span>
+              </td>
+              <td class="px-3 py-3 text-center font-semibold text-white">${p.goals}</td>
+              <td class="px-3 py-3 text-center text-slate-200">${p.assists}</td>
+              <td class="px-3 py-3 text-center font-bold text-cyanfc">${p.ga}</td>
+              <td class="px-3 py-3 text-center">${gaPer90Display}</td>
+              <td class="px-3 py-3 text-center text-slate-300">${p.shots}</td>
+              <td class="px-3 py-3 text-center">${shotPctDisplay}</td>
+              <td class="px-3 py-3 text-center text-slate-300">${passDisplay}</td>
+              <td class="px-3 py-3 text-center text-slate-300">${tackleDisplay}</td>
+              <td class="px-3 py-3 text-center">${p.cleanSheet > 0 ? `<span class="rounded-md bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">${p.cleanSheet}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center">${p.redCards > 0 ? `<span class="rounded-md bg-rose-500/20 px-2 py-0.5 font-semibold text-rose-300">${p.redCards}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center">${p.saves > 0 ? `<span class="font-semibold text-sky-300">${p.saves}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center">${p.mom > 0 ? `<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-amber-300 font-semibold">★ ${p.mom}</span>` : '<span class="text-slate-600">0</span>'}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    // --- LISTE & FEUILLE DE MATCH ---
+    function renderMatchesList() {
+      const container = document.getElementById('matchesList');
+      if (state.matches.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Aucun match trouvé.</p>';
+        return;
+      }
+
+      container.innerHTML = state.matches
+        .map((m) => {
+          const isSelected = m.id === state.selectedMatchId;
+          const badgeCfg = {
+            W: { label: 'VICTOIRE', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+            D: { label: 'NUL', cls: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+            L: { label: 'DÉFAITE', cls: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
+          }[m.outcome];
+
+          const myPassPct =
+            m.myStats && m.myStats.passAttempts > 0
+              ? Math.round((m.myStats.passesMade / m.myStats.passAttempts) * 100) + '%'
+              : null;
+
+          return `
+            <button type="button" data-match-id="${m.id}" class="match-card-btn w-full rounded-xl border p-3.5 text-left transition ${
+              isSelected
+                ? 'border-volt/60 bg-volt/10 shadow-md shadow-volt/5'
+                : 'border-white/10 bg-pitch-900/60 hover:border-white/25 hover:bg-pitch-900'
+            }">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="rounded-lg border px-2 py-0.5 text-[10px] font-bold tracking-wider ${badgeCfg.cls}">
+                    ${badgeCfg.label}
+                  </span>
+                  <span class="font-display text-base font-bold text-white">
+                    ${m.gf} - ${m.ga}
+                  </span>
+                  <span class="text-xs font-medium text-slate-300">vs ${m.opponentName}</span>
+                  ${m.dnf ? '<span class="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">DNF</span>' : ''}
+                </div>
+                <span class="text-[11px] text-slate-400">${m.dateLabel}</span>
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                ${m.myStats ? `<span>Tirs : <strong class="text-slate-200">${m.myStats.shots}</strong></span>` : ''}
+                ${myPassPct ? `<span>Passes : <strong class="text-slate-200">${myPassPct}</strong></span>` : ''}
+                ${m.myStats ? `<span>Tacles : <strong class="text-slate-200">${m.myStats.tacklesMade}/${m.myStats.tackleAttempts}</strong></span>` : ''}
+                <span class="ml-auto text-volt/90 font-medium">Détails →</span>
+              </div>
+            </button>
+          `;
+        })
+        .join('');
+
+      document.querySelectorAll('.match-card-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.selectedMatchId = btn.getAttribute('data-match-id');
+          renderMatchesList();
+          renderMatchDetail(state.selectedMatchId);
+        });
+      });
+    }
+
+    function renderMatchDetail(matchId) {
+      const box = document.getElementById('matchDetailBox');
+      const match = state.matches.find((m) => m.id === matchId);
+      if (!match) return;
+
+      document.getElementById('selectedMatchSubtitle').textContent = `${match.myClubName} ${match.gf} - ${match.ga} ${match.opponentName} (${match.dateLabel})`;
+
+      const matchPlayers = state.normalizedPlayers
+        .filter((p) => p.matchId === matchId)
+        .sort((a, b) => b.rating - a.rating);
+
+      let teamCompareHtml = '';
+      if (match.myStats) {
+        const my = match.myStats;
+        const opp = match.oppStats;
+        const myPassStr = my.passAttempts > 0 ? `${my.passesMade}/${my.passAttempts} (${Math.round((my.passesMade / my.passAttempts) * 100)}%)` : `${my.passesMade}`;
+        const oppPassStr = opp && opp.passAttempts > 0 ? `${opp.passesMade}/${opp.passAttempts} (${Math.round((opp.passesMade / opp.passAttempts) * 100)}%)` : (opp ? `${opp.passesMade}` : '—');
+
+        teamCompareHtml = `
+          <div class="rounded-xl border border-white/10 bg-pitch-900/90 p-3.5">
+            <div class="mb-2.5 flex items-center justify-between text-xs font-bold">
+              <span class="text-volt">${match.myClubName}</span>
+              <span class="rounded-lg bg-white/5 px-2.5 py-0.5 font-display text-sm text-white">${match.gf} - ${match.ga}</span>
+              <span class="text-rose-400">${match.opponentName}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-[11px]">
+              <div class="rounded-lg bg-pitch-950/70 p-2">
+                <div class="text-slate-400">Tirs</div>
+                <div class="mt-0.5 font-semibold text-white">${my.shots} <span class="text-slate-500">vs</span> ${opp ? opp.shots : '—'}</div>
+              </div>
+              <div class="rounded-lg bg-pitch-950/70 p-2">
+                <div class="text-slate-400">Passes</div>
+                <div class="mt-0.5 font-semibold text-white">${myPassStr} <span class="text-slate-500">vs</span> ${oppPassStr}</div>
+              </div>
+              <div class="rounded-lg bg-pitch-950/70 p-2">
+                <div class="text-slate-400">Tacles</div>
+                <div class="mt-0.5 font-semibold text-white">${my.tacklesMade}/${my.tackleAttempts} <span class="text-slate-500">vs</span> ${opp ? `${opp.tacklesMade}/${opp.tackleAttempts}` : '—'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (matchPlayers.length === 0) {
+        box.innerHTML =
+          teamCompareHtml +
+          `<div class="rounded-xl border border-white/10 bg-pitch-900/60 p-5 text-xs text-slate-400">
+            Aucune statistique individuelle trouvée pour ce match.
+          </div>`;
+        return;
+      }
+
+      const playersHtml = `
+        <div class="space-y-2">
+          ${matchPlayers
+            .map((p) => {
+              const pGaPer90 = p.secondsPlayed > 0 ? (((p.goals + p.assists) / p.secondsPlayed) * 5400).toFixed(2) : null;
+              const pShotPct = p.shots > 0 ? Math.round((p.goals / p.shots) * 100) + '%' : null;
+              return `
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-pitch-900/80 px-3.5 py-2.5">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-white">${p.name}</span>
+                    <span class="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">${p.position}</span>
+                    ${p.mom ? '<span class="rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">HDM</span>' : ''}
+                  </div>
+                  <diinev class="mt-1 flex flex-wrap gap-2.5 text-[11px] text-slate-400">
+                    <span>Buts : <strong class="text-white">${p.goals}</strong></span>
+                    <span>Passes D. : <strong class="text-white">${p.assists}</strong></span>
+                    <span>Tirs : <strong class="text-slate-200">${p.shots}</strong>${pShotPct ? ` <span class="text-volt">(${pShotPct})</span>` : ''}</span>
+                    ${pGaPer90 ? `<span>G+A/90 : <strong class="text-cyanfc">${pGaPer90}</strong></span>` : ''}
+                    <span>Passes : <strong class="text-slate-200">${p.passesMade}/${p.passAttempts}</strong></span>
+                    <span>Tacles : <strong class="text-slate-200">${p.tacklesMade}/${p.tackleAttempts}</strong></span>
+                  </div>
+                </div>
+                <div class="flex h-9 w-12 items-center justify-center rounded-xl bg-volt/15 font-display text-sm font-bold text-volt border border-volt/30">
+                  ${p.rating > 0 ? p.rating.toFixed(2) : '—'}
+                </div>
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
+      `;
+
+      box.innerHTML = teamCompareHtml + playersHtml;
+    }
+
+    // --- DONNÉES DE DÉMONSTRATION (Structure identique à EA FC 27) ---
+    function loadDemoData() {
+      const now = Math.floor(Date.now() / 1000);
+      state.isDemo = true;
+      state.rawExternalPlayers = [];
+      state.rawMatches = [
+        {
+          matchId: 'demo_105',
+          timestamp: now - 3600,
+          clubs: {
+            '73986': { details: { name: 'AZERTYTEAM' }, goals: '4', shots: '14', passesmade: '142', passattempts: '160', tacklesmade: '16', tackleattempts: '24' },
+            '99101': { details: { name: 'Olympique Virtuel' }, goals: '1', shots: '6', passesmade: '98', passattempts: '122', tacklesmade: '11', tackleattempts: '19' },
+          },
+          players: {
+            '73986': {
+              '206262911': { name: 'domo0078', position: 'forward', rating: '9.20', goals: '2', assists: '1', shots: '6', passesMade: '24', passAttempts: '28', tacklesMade: '2', tackleAttempts: '4', secondsPlayed: 5400, manOfTheMatch: 1 },
+              '302926149': { name: 'Franco x51', position: 'midfielder', rating: '8.70', goals: '1', assists: '2', shots: '4', passesMade: '54', passAttempts: '60', tacklesMade: '4', tackleAttempts: '6', secondsPlayed: 5400, manOfTheMatch: 0 },
+              '401122334': { name: 'Maestro_MC', position: 'midfielder', rating: '8.10', goals: '1', assists: '1', shots: '3', passesMade: '41', passAttempts: '46', tacklesMade: '5', tackleAttempts: '7', secondsPlayed: 4500, manOfTheMatch: 0 },
+              '509988776': { name: 'Roc_DC', position: 'defender', rating: '7.80', goals: '0', assists: '0', shots: '1', passesMade: '23', passAttempts: '26', tacklesMade: '5', tackleAttempts: '7', secondsPlayed: 5400, manOfTheMatch: 0 },
+            },
+          },
+        },
+        {
+          matchId: 'demo_104',
+          timestamp: now - 7200,
+          clubs: {
+            '73986': { details: { name: 'AZERTYTEAM' }, goals: '2', shots: '11', passesmade: '128', passattempts: '148', tacklesmade: '14', tackleattempts: '22' },
+            '99102': { details: { name: 'Atlético Pro' }, goals: '2', shots: '10', passesmade: '131', passattempts: '150', tacklesmade: '13', tackleattempts: '21' },
+          },
+          players: {
+            '73986': {
+              '206262911': { name: 'domo0078', position: 'forward', rating: '7.90', goals: '1', assists: '0', shots: '5', passesMade: '19', passAttempts: '24', tacklesMade: '1', tackleAttempts: '3', secondsPlayed: 5400, manOfTheMatch: 0 },
+              '302926149': { name: 'Franco x51', position: 'midfielder', rating: '8.50', goals: '1', assists: '1', shots: '4', passesMade: '49', passAttempts: '55', tacklesMade: '3', tackleAttempts: '5', secondsPlayed: 5400, manOfTheMatch: 1 },
+              '401122334': { name: 'Maestro_MC', position: 'midfielder', rating: '7.60', goals: '0', assists: '1', shots: '2', passesMade: '38', passAttempts: '44', tacklesMade: '4', tackleAttempts: '6', secondsPlayed: 5400, manOfTheMatch: 0 },
+              '509988776': { name: 'Roc_DC', position: 'defender', rating: '7.40', goals: '0', assists: '0', shots: '0', passesMade: '22', passAttempts: '25', tacklesMade: '6', tackleAttempts: '8', secondsPlayed: 5400, manOfTheMatch: 0 },
+            },
+          },
+        },
+      ];
+
+      state.detectedClubs = detectClubsInRawMatches(state.rawMatches);
+      state.selectedClubId = '73986';
+      state.selectedMatchId = 'demo_105';
+      updateClubSelectorUI();
+      refreshAll();
+    }
+
+    // --- ÉVÉNEMENTS ---
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drop-active');
+      });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drop-active'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drop-active');
+        handleFiles(e.dataTransfer.files);
+      });
+
+      document.getElementById('clubSelect').addEventListener('change', (e) => {
+        state.selectedClubId = e.target.value;
+        state.selectedMatchId = null;
+        refreshAll();
+      });
+
+      document.getElementById('btnDemo').addEventListener('click', () => {
+        loadDemoData();
+        showToast('Données de démonstration rechargées.', 'info');
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        fileInput.value = '';
+        document.getElementById('toastBox').classList.add('hidden');
+        autoLoadMatchData();
+      });
+
+      document.getElementById('playerChartMetric').addEventListener('change', renderPlayersChart);
+      document.getElementById('playerSearch').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderPlayersTable();
+      });
+      document.getElementById('posFilter').addEventListener('change', (e) => {
+        state.posFilter = e.target.value;
+        renderPlayersTable();
+      });
+
+      document.querySelectorAll('th[data-sort]').forEach((th) => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-sort');
+          if (state.sortKey === key) {
+            state.sortDir = state.sortDir === 'desc' ? 'asc' : 'desc';
+          } else {
+            state.sortKey = key;
+            state.sortDir = key === 'name' || key === 'position' ? 'asc' : 'desc';
+          }
+          renderPlayersTable();
+        });
+      });
+
+      autoLoadMatchData();
+    });
+  </script>
+</body>
+</html>
