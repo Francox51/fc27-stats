@@ -150,16 +150,28 @@ def main():
             seen_matches.add(mk)
             added_matches += 1
 
+    club_id_str = str(club_id)
+
     existing_players = load_json_list(JOUEURS_JSON)
     seen_players = {player_row_key(p) for p in existing_players}
     added_players = 0
 
+    existing_opp_players = load_json_list(ADVERSAIRES_JOUEURS_JSON)
+    seen_opp_players = {player_row_key(p) for p in existing_opp_players}
+    added_opp_players = 0
+
     for p in new_players:
         pk = player_row_key(p)
-        if pk not in seen_players:
-            existing_players.append(p)
-            seen_players.add(pk)
-            added_players += 1
+        if str(p.get("clubId")) == club_id_str:
+            if pk not in seen_players:
+                existing_players.append(p)
+                seen_players.add(pk)
+                added_players += 1
+        else:
+            if pk not in seen_opp_players:
+                existing_opp_players.append(p)
+                seen_opp_players.add(pk)
+                added_opp_players += 1
 
     with open(MATCHS_JSON, "w", encoding="utf-8") as f:
         json.dump(existing_matches, f, indent=2, ensure_ascii=False, default=serialize_value)
@@ -167,11 +179,16 @@ def main():
     with open(JOUEURS_JSON, "w", encoding="utf-8") as f:
         json.dump(existing_players, f, indent=2, ensure_ascii=False, default=serialize_value)
 
+    with open(ADVERSAIRES_JOUEURS_JSON, "w", encoding="utf-8") as f:
+        json.dump(existing_opp_players, f, indent=2, ensure_ascii=False, default=serialize_value)
+
     save_csv(existing_matches, MATCHS_CSV)
     save_csv(existing_players, JOUEURS_CSV)
+    save_csv(existing_opp_players, ADVERSAIRES_JOUEURS_CSV)
 
     print(f"Nouveaux matchs ajoutés : {added_matches} (total : {len(existing_matches)})")
-    print(f"Nouvelles lignes joueurs ajoutées : {added_players} (total : {len(existing_players)})")
+    print(f"Nouvelles lignes joueurs club ajoutées : {added_players} (total : {len(existing_players)})")
+    print(f"Nouvelles lignes joueurs adverses ajoutées : {added_opp_players} (total : {len(existing_opp_players)})")
 
 
 if __name__ == "__main__":
