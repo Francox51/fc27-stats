@@ -133,9 +133,9 @@ def main():
     new_matches = api.get_club_matches(club_id, match_type=MATCH_TYPE, count=10) or []
     print("Matchs reçus de l'API :", len(new_matches))
     new_players = api.get_match_players(club_id, match_type=MATCH_TYPE, count=10, both_teams=True) or []
-print("Total lignes joueurs reçues (both_teams=True) :", len(new_players))
-clubs_vus = {str(p.get("clubId")) for p in new_players}
-print("ClubIds présents dans new_players :", clubs_vus)
+    print("Total lignes joueurs reçues (both_teams=True) :", len(new_players))
+    clubs_vus = {str(p.get("clubId")) for p in new_players}
+    print("ClubIds présents dans new_players :", clubs_vus)
 
     existing_matches = load_json_list(MATCHS_JSON)
     seen_matches = {match_key(m) for m in existing_matches}
