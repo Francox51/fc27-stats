@@ -463,5 +463,50 @@
     "dnf": false,
     "crestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99160218.png",
     "opponentCrestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99030102.png"
+  },
+  {
+    "matchId": 214418744780313,
+    "timestamp": "2026-11-26T00:32:19+01:00",
+    "matchType": "leagueMatch",
+    "clubId": 73986,
+    "clubName": "AZERTYTEAM",
+    "opponentId": 1517367,
+    "opponentName": "Maghreb 2123",
+    "goals": 3,
+    "goalsAgainst": 4,
+    "result": "loss",
+    "dnf": false,
+    "crestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99160218.png",
+    "opponentCrestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l1.png"
+  },
+  {
+    "matchId": 214616444380257,
+    "timestamp": "2026-11-26T00:14:29+01:00",
+    "matchType": "leagueMatch",
+    "clubId": 73986,
+    "clubName": "AZERTYTEAM",
+    "opponentId": 81557,
+    "opponentName": "REAL KITEMUERTE",
+    "goals": 3,
+    "goalsAgainst": 2,
+    "result": "win",
+    "dnf": false,
+    "crestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99160218.png",
+    "opponentCrestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99090109.png"
+  },
+  {
+    "matchId": 214482599640090,
+    "timestamp": "2026-11-25T23:58:15+01:00",
+    "matchType": "leagueMatch",
+    "clubId": 73986,
+    "clubName": "AZERTYTEAM",
+    "opponentId": 2116085,
+    "opponentName": "AC IMPACTANT",
+    "goals": 6,
+    "goalsAgainst": 3,
+    "result": "win",
+    "dnf": false,
+    "crestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l99160218.png",
+    "opponentCrestUrl": "https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l245.png"
   }
 ]
