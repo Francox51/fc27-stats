@@ -337,6 +337,9 @@
                 <th class="cursor-pointer px-3 py-3 text-center text-volt hover:text-white" data-sort="shotPct">% Tir</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="passPct">Passes (Réuss./Tent.)</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="tacklePct">Tacles (Réuss./Tent.)</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="cleanSheet">CS</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="redCards">CR</th>
+                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="saves">Arrêts</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="mom">HDM</th>
               </tr>
             </thead>
@@ -1318,6 +1321,9 @@
               <td class="px-3 py-3 text-center">${shotPctDisplay}</td>
               <td class="px-3 py-3 text-center text-slate-300">${passDisplay}</td>
               <td class="px-3 py-3 text-center text-slate-300">${tackleDisplay}</td>
+              <td class="px-3 py-3 text-center">${p.cleanSheet > 0 ? `<span class="rounded-md bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">${p.cleanSheet}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center">${p.redCards > 0 ? `<span class="rounded-md bg-rose-500/20 px-2 py-0.5 font-semibold text-rose-300">${p.redCards}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center">${p.saves > 0 ? `<span class="font-semibold text-sky-300">${p.saves}</span>` : '<span class="text-slate-600">0</span>'}</td>
               <td class="px-3 py-3 text-center">${p.mom > 0 ? `<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-amber-300 font-semibold">★ ${p.mom}</span>` : '<span class="text-slate-600">0</span>'}</td>
             </tr>
           `;
@@ -1452,7 +1458,7 @@
                     <span class="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">${p.position}</span>
                     ${p.mom ? '<span class="rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">HDM</span>' : ''}
                   </div>
-                  <div class="mt-1 flex flex-wrap gap-2.5 text-[11px] text-slate-400">
+                  <diinev class="mt-1 flex flex-wrap gap-2.5 text-[11px] text-slate-400">
                     <span>Buts : <strong class="text-white">${p.goals}</strong></span>
                     <span>Passes D. : <strong class="text-white">${p.assists}</strong></span>
                     <span>Tirs : <strong class="text-slate-200">${p.shots}</strong>${pShotPct ? ` <span class="text-volt">(${pShotPct})</span>` : ''}</span>
