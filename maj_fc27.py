@@ -14,6 +14,8 @@ MATCHS_JSON = Path("matchs_fc27.json")
 JOUEURS_JSON = Path("joueurs_matchs_fc27.json")
 MATCHS_CSV = Path("matchs_fc27.csv")
 JOUEURS_CSV = Path("joueurs_matchs_fc27.csv")
+ADVERSAIRES_JOUEURS_JSON = Path("adversaires_joueurs_fc27.json")
+ADVERSAIRES_JOUEURS_CSV = Path("adversaires_joueurs_fc27.csv")
 BRUT_MATCHS_JSON = Path("brut_matchs.json")
 BRUT_JOUEURS_JSON = Path("brut_joueurs.json")
 
