@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import json
+import pprint
 from datetime import date, datetime
 from pathlib import Path
 from fc_clubs_api import FC27API
