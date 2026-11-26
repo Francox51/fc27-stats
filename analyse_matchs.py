@@ -31,8 +31,7 @@ def resume_controle_match(players_rows: list[dict]) -> dict:
         "tackles_made": tackles_made,
         "tackle_success_pct": round((tackles_made / tackle_attempts) * 100, 1) if tackle_attempts > 0 else 0.0,
     }
-  
-  def evaluer_match_equipe(stats: dict) -> dict:
+def evaluer_match_equipe(stats: dict) -> dict:
     conv = stats["conversion_pct"]
     passes = stats["pass_accuracy_pct"]
     tacles = stats["tackles_made"]
@@ -67,7 +66,6 @@ def resume_controle_match(players_rows: list[dict]) -> dict:
         },
         "tendance": tendance,
     }
-
 def grouper_par_match(rows: list[dict]) -> dict[str, list[dict]]:
     grouped = defaultdict(list)
     for r in rows:
