@@ -139,13 +139,6 @@ def main():
     print("Total lignes joueurs reçues (both_teams=True) :", len(new_players))
     clubs_vus = {str(p.get("clubId")) for p in new_players}
     print("ClubIds présents dans new_players :", clubs_vus)
-    if new_matches:
-        print("Clés match :", list(new_matches[0].keys()))
-    if new_players:
-        print("Clés joueur :", list(new_players[0].keys()))
-    print("Méthodes disponibles sur api :", [m for m in dir(api) if not m.startswith("_")])
-    if new_matches:
-        pprint.pprint(new_matches[0])
 
     existing_matches = load_json_list(MATCHS_JSON)
     seen_matches = {match_key(m) for m in existing_matches}
