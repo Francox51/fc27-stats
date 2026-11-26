@@ -83,7 +83,7 @@ def main():
 
     tous_les_matchs = sorted(set(club_par_match.keys()) | set(adv_par_match.keys()))
 
-    for mid in tous_les_matchs:
+    for mid in tous_les_matchs[-3:]:
         c_rows = club_par_match.get(mid, [])
         a_rows = adv_par_match.get(mid, [])
 
