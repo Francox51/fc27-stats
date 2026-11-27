@@ -224,12 +224,12 @@
             <span class="text-xs font-medium uppercase tracking-wider">Note Collective</span>
             <i data-lucide="award" class="h-4 w-4 text-volt"></i>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span id="kpiClubAvg20" class="font-display text-3xl font-bold text-white">12.78</span>
-            <span class="text-xs text-slate-400">/ 20</span>
-            <span id="kpiClubDiff20" class="ml-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">+0.78</span>
+          <div class="mt-2 flex flex-wrap items-baseline gap-1.5">
+            <span id="kpiClubAvg20" class="font-display text-3xl font-bold text-white leading-none">12.78</span>
+            <span class="text-xs font-medium text-slate-400 whitespace-nowrap">/20</span>
+            <span id="kpiClubDiff20" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300 whitespace-nowrap">+0.78</span>
           </div>
-          <p id="kpiClubLast10" class="mt-3 truncate text-xs text-slate-400">10 derniers : 11.88/20 (-0.12 vs 12.00)</p>
+          <p id="kpiClubLast10" class="mt-2.5 text-[11px] leading-snug text-slate-400">10 derniers : <strong class="text-slate-200">11.88/20</strong> (-0.12)</p>
         </div>
 
         <!-- 5. Précision des passes -->
@@ -328,8 +328,7 @@
                 <th class="cursor-pointer px-4 py-3 hover:text-white" data-sort="name">Joueur</th>
                 <th class="cursor-pointer px-3 py-3 hover:text-white" data-sort="position">Poste</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="apps">MJ</th>
-                <th class="cursor-pointer px-3 py-3 text-center text-volt hover:text-white" data-sort="avgRating">Note ↓</th>
-                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="goals">Buts</th>
+<th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="goals">Buts</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="assists">Passes D.</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="ga">G+A</th>
                 <th class="cursor-pointer px-3 py-3 text-center text-cyanfc hover:text-white" data-sort="gaPer90">G+A/90</th>
@@ -419,7 +418,7 @@
       normalizedPlayers: [],
       playersSummary: [],
       selectedMatchId: null,
-      sortKey: 'avgRating',
+      sortKey: 'ga',
       sortDir: 'desc',
       searchQuery: '',
       posFilter: 'ALL',
@@ -1184,7 +1183,7 @@
       }
       if (elLast10) {
         const s10 = diff10_20 >= 0 ? '+' : '';
-        elLast10.textContent = `10 derniers : ${avg10_20.toFixed(2)}/20 (${s10}${diff10_20.toFixed(2)} vs 12.00)`;
+        elLast10.innerHTML = `10 derniers : <strong class="text-slate-200">${avg10_20.toFixed(2)}/20</strong> (${s10}${diff10_20.toFixed(2)})`;
       }
 
       let totalPassesMade = mList.reduce((acc, m) => acc + (m.myStats?.passesMade || 0), 0);
