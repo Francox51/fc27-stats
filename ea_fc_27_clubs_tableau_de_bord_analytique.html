@@ -1359,78 +1359,57 @@
     }
 
     // --- LISTE & FEUILLE DE MATCH ---
+    function computeMatchSummary(matches) {
+      const s = { mj: matches.length, v: 0, n: 0, d: 0, bp: 0, bc: 0, diff: 0 };
+      for (const m of matches) {
+        const gf = Number(m.gf ?? m.goals ?? 0) || 0;
+        const ga = Number(m.ga ?? m.goalsAgainst ?? 0) || 0;
+        s.bp += gf;
+        s.bc += ga;
+        if (m.outcome === 'W') s.v += 1;
+        else if (m.outcome === 'D') s.n += 1;
+        else if (m.outcome === 'L') s.d += 1;
+      }
+      s.diff = s.bp - s.bc;
+      return s;
+    }
+
+    function fmtDiff(val) {
+      return val > 0 ? `+${val}` : `${val}`;
+    }
+
+    function renderMatchTable(title, badge, badgeCls, matches) {
+      const s = computeMatchSummary(matches);
+      const body = matches.length
+        ? matches.map((m) => {
+            const sel = m.id === state.selectedMatchId;
+            const gf = Number(m.gf ?? m.goals ?? 0) || 0;
+            const ga = Number(m.ga ?? m.goalsAgainst ?? 0) || 0;
+            const diff = gf - ga;
+            const res = {
+              W: { l: 'V', c: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+              D: { l: 'N', c: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+              L: { l: 'D', c: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
+            }[m.outcome] || { l: '-', c: 'bg-slate-500/20 text-slate-300 border-slate-500/30' };
+            const dt = m.dateStr || m.formattedDate || (m.timestamp ? String(m.timestamp).slice(0, 10) : '-');
+            const sn = m.season ? `S${m.season}` : '-';
+            return `<tr data-match-id="${m.id}" class="match-card-btn cursor-pointer transition ${sel ? 'bg-volt/15 text-white' : 'hover:bg-white/5 text-slate-200'}"><td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${dt}</td><td class="px-3 py-2 text-xs font-medium text-white">${m.opponentName || 'Adversaire'}</td><td class="px-3 py-2 text-center"><span class="inline-block rounded border px-1.5 py-0.5 text-[11px] font-bold ${res.c}">${res.l}</span></td><td class="px-3 py-2 text-center font-display text-sm font-bold text-white whitespace-nowrap">${gf} - ${ga}</td><td class="px-3 py-2 text-center text-xs font-semibold ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-slate-400'}">${fmtDiff(diff)}</td><td class="px-3 py-2 text-right text-[11px] text-slate-400">${sn}</td></tr>`;
+          }).join('')
+        : `<tr><td colspan="6" class="px-3 py-4 text-center text-xs text-slate-400">Aucun match.</td></tr>`;
+
+      return `<div class="rounded-xl border border-white/10 bg-pitch-900/60 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-pitch-950/60 px-3.5 py-2.5"><div class="flex items-center gap-2"><span class="rounded border px-2 py-0.5 text-[11px] font-bold ${badgeCls}">${badge}</span><h4 class="font-display text-sm font-bold text-white">${title}</h4></div><div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-300"><span class="rounded bg-white/5 px-2 py-0.5">MJ <strong class="text-white">${s.mj}</strong></span><span class="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">V <strong>${s.v}</strong></span><span class="rounded bg-amber-500/10 px-2 py-0.5 text-amber-300">N <strong>${s.n}</strong></span><span class="rounded bg-rose-500/10 px-2 py-0.5 text-rose-300">D <strong>${s.d}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BP <strong class="text-white">${s.bp}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BC <strong class="text-white">${s.bc}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">Diff <strong class="${s.diff > 0 ? 'text-emerald-400' : s.diff < 0 ? 'text-rose-400' : 'text-white'}">${fmtDiff(s.diff)}</strong></span></div></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="border-b border-white/10 bg-pitch-950/30 text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Adversaire</th><th class="px-3 py-2 text-center">Rés.</th><th class="px-3 py-2 text-center">Score</th><th class="px-3 py-2 text-center">Diff</th><th class="px-3 py-2 text-right">Saison</th></tr></thead><tbody class="divide-y divide-white/5">${body}</tbody></table></div></div>`;
+    }
+
     function renderMatchesList() {
       const container = document.getElementById('matchesList');
-      if (state.matches.length === 0) {
+      if (!container) return;
+      if (!state.matches || state.matches.length === 0) {
         container.innerHTML = '<p class="text-xs text-slate-400">Aucun match trouvé.</p>';
         return;
       }
-
-      container.innerHTML = state.matches
-        .map((m) => {
-          const isSelected = m.id === state.selectedMatchId;
-          const badgeCfg = {
-            W: { label: 'VICTOIRE', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-            D: { label: 'NUL', cls: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-            L: { label: 'DÉFAITE', cls: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
-          }[m.outcome];
-
-          const myPassPct =
-            m.myStats && m.myStats.passAttempts > 0
-              ? Math.round((m.myStats.passesMade / m.myStats.passAttempts) * 100) + '%'
-              : null;
-
-          return `
-            <button type="button" data-match-id="${m.id}" class="match-card-btn w-full rounded-xl border p-3.5 text-left transition ${
-              isSelected
-                ? 'border-volt/60 bg-volt/10 shadow-md shadow-volt/5'
-                : 'border-white/10 bg-pitch-900/60 hover:border-white/25 hover:bg-pitch-900'
-            }">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5">
-                  <span class="rounded-lg border px-2 py-0.5 text-[10px] font-bold tracking-wider ${badgeCfg.cls}">
-                    ${badgeCfg.label}
-                  </span>
-                  <span class="font-display text-base font-bold text-white">
-                    ${m.gf} - ${m.ga}
-                  </span>
-                  <span class="text-xs font-medium text-slate-300">vs ${m.opponentName}</span>
-                  ${m.dnf ? '<span class="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">DNF</span>' : ''}
-                </div>
-                <span class="text-[11px] text-slate-400">${m.dateLabel}</span>
-              </div>
-              ${(() => {
-                const matchKey = String(m.raw?.matchId ?? m.matchId ?? m.id ?? '');
-                const ev = state.matchEvaluations?.[matchKey]?.club || null;
-                const note20 = typeof ev?.note_20 === 'number' ? `${ev.note_20.toFixed(1)}/20` : null;
-                const trends = Array.isArray(ev?.tendances) ? ev.tendances : [];
-                return `
-                  <div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                    ${note20 ? `<span class="rounded border border-volt/35 bg-volt/10 px-1.5 py-0.5 font-semibold text-volt">Note : ${note20}</span>` : ''}
-                    ${m.myStats ? `<span>Tirs : <strong class="text-slate-200">${m.myStats.shots}</strong></span>` : ''}
-                    ${myPassPct ? `<span>Passes : <strong class="text-slate-200">${myPassPct}</strong></span>` : ''}
-                    ${m.myStats ? `<span>Tacles : <strong class="text-slate-200">${m.myStats.tacklesMade}/${m.myStats.tackleAttempts}</strong></span>` : ''}
-                    <span class="ml-auto text-volt/90 font-medium">Détails →</span>
-                  </div>
-                  ${trends.length > 0 ? `
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                      ${trends.map((t) => `<span class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-200">${t}</span>`).join('')}
-                    </div>
-                  ` : ''}
-                `;
-              })()}
-            </button>
-          `;
-        })
-        .join('');
-
-      document.querySelectorAll('.match-card-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          state.selectedMatchId = btn.getAttribute('data-match-id');
-          renderMatchesList();
-          renderMatchDetail(state.selectedMatchId);
-        });
-      });
+      const league = state.matches.filter((m) => (m.matchType || 'leagueMatch') === 'leagueMatch');
+      const playoffs = state.matches.filter((m) => m.matchType === 'playoffMatch');
+      container.innerHTML = `<div class="space-y-4">${renderMatchTable('Championnat (leagueMatch)', 'LIGUE', 'border-cyanfc/30 bg-cyanfc/15 text-cyanfc', league)}${renderMatchTable('Playoffs (playoffMatch)', 'PLAYOFFS', 'border-volt/30 bg-volt/15 text-volt', playoffs)}</div>`;
     }
 
     function renderMatchDetail(matchId) {
