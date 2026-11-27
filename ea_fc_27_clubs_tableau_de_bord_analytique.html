@@ -1444,13 +1444,13 @@
 
     function renderMatchDetail(matchId) {
       const box = document.getElementById('matchDetailBox');
-      const match = state.matches.find((m) => m.id === matchId);
+      const match = state.matches.find((m) => String(m.id) === String(matchId));
       if (!match) return;
 
       document.getElementById('selectedMatchSubtitle').textContent = `${match.myClubName} ${match.gf} - ${match.ga} ${match.opponentName} (${match.dateLabel})`;
 
       const matchPlayers = state.normalizedPlayers
-        .filter((p) => p.matchId === matchId)
+        .filter((p) => String(p.matchId) === String(matchId))
         .sort((a, b) => b.rating - a.rating);
 
       let teamCompareHtml = '';
@@ -1508,7 +1508,7 @@
                     <span class="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">${p.position}</span>
                     ${p.mom ? '<span class="rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">HDM</span>' : ''}
                   </div>
-                  <diinev class="mt-1 flex flex-wrap gap-2.5 text-[11px] text-slate-400">
+                  <div class="mt-1 flex flex-wrap gap-2.5 text-[11px] text-slate-400">
                     <span>Buts : <strong class="text-white">${p.goals}</strong></span>
                     <span>Passes D. : <strong class="text-white">${p.assists}</strong></span>
                     <span>Tirs : <strong class="text-slate-200">${p.shots}</strong>${pShotPct ? ` <span class="text-volt">(${pShotPct})</span>` : ''}</span>
