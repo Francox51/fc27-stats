@@ -1611,8 +1611,12 @@
 
       document.getElementById('btnReset').addEventListener('click', () => {
         fileInput.value = '';
+        state.selectedMatchId = null;
         document.getElementById('toastBox').classList.add('hidden');
-        const matchesListEl = document.getElementById('matchesList');
+        refreshAll();
+      });
+
+      const matchesListEl = document.getElementById('matchesList');
       if (matchesListEl) {
         matchesListEl.addEventListener('click', (e) => {
           const row = e.target.closest('.match-card-btn[data-match-id]');
@@ -1626,7 +1630,6 @@
       }
 
       autoLoadMatchData();
-      });
 
       document.getElementById('playerChartMetric').addEventListener('change', renderPlayersChart);
       document.getElementById('playerSearch').addEventListener('input', (e) => {
