@@ -852,11 +852,20 @@
       if (state.rawExternalPlayers.length > 0) {
         const matchMap = new Map(parsedMatches.map((m) => [m.id, m]));
 
+        const seenPlayerMatchKeys = new Set(
+          parsedPlayers.map((pl) => `${String(pl.matchId)}::${String(pl.playerId || pl.name || '').trim().toLowerCase()}`)
+        );
+
         state.rawExternalPlayers.forEach((p, idx) => {
           const norm = normalizePlayerRow(p, '', idx);
           if (state.selectedClubId && norm.clubId && norm.clubId !== state.selectedClubId) {
             return;
           }
+          const dedupKey = `${String(norm.matchId)}::${String(norm.playerId || norm.name || '').trim().toLowerCase()}`;
+          if (seenPlayerMatchKeys.has(dedupKey)) {
+            return;
+          }
+          seenPlayerMatchKeys.add(dedupKey);
           parsedPlayers.push(norm);
 
           // Agréger les stats collectives du match si myStats n'est pas encore renseigné
@@ -1398,7 +1407,8 @@
     }
 
     function renderFormTrend(matches) {
-      const recent = matches.slice(-5);
+      const chronological = [...matches].sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const recent = chronological.slice(-5);
       if (!recent.length) return '';
       const dots = recent.map((m) => {
         if (m.outcome === 'W') return '<span title="Victoire" class="inline-flex h-5 w-5 items-center justify-center rounded bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300">V</span>';
@@ -1449,8 +1459,16 @@
 
       document.getElementById('selectedMatchSubtitle').textContent = `${match.myClubName} ${match.gf} - ${match.ga} ${match.opponentName} (${match.dateLabel})`;
 
-      const matchPlayers = state.normalizedPlayers
-        .filter((p) => String(p.matchId) === String(matchId))
+      const rawMatchPlayers = state.normalizedPlayers
+        .filter((p) => String(p.matchId) === String(matchId));
+      const uniqueMatchPlayersMap = new Map();
+      rawMatchPlayers.forEach((pl) => {
+        const key = `${String(pl.playerId || pl.name || '').trim().toLowerCase()}::${String(pl.position || '').trim().toLowerCase()}`;
+        if (!uniqueMatchPlayersMap.has(key)) {
+          uniqueMatchPlayersMap.set(key, pl);
+        }
+      });
+      const matchPlayers = Array.from(uniqueMatchPlayersMap.values())
         .sort((a, b) => b.rating - a.rating);
 
       let teamCompareHtml = '';
