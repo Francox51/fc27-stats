@@ -1378,6 +1378,36 @@
       return val > 0 ? `+${val}` : `${val}`;
     }
 
+    function getMatchDateLabel(m) {
+      if (m.dateLabel) return m.dateLabel;
+      const tsNum = Number(m.ts || 0);
+      if (tsNum > 0) {
+        const ms = tsNum < 1e12 ? tsNum * 1000 : tsNum;
+        return new Date(ms).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      }
+      return '-';
+    }
+
+    function getMatchStatsSummary(m) {
+      const st = m.myStats;
+      if (!st) return '<span class="text-slate-500">-</span>';
+      const shots = st.shots ?? 0;
+      const passPct = st.passAttempts > 0 ? Math.round((st.passesMade / st.passAttempts) * 100) + '%' : '-';
+      const tackles = st.tacklesMade ?? 0;
+      return `<div class="flex flex-wrap items-center justify-end gap-1.5 text-[11px] text-slate-300 whitespace-nowrap"><span class="rounded bg-white/5 px-1.5 py-0.5">Tirs <strong class="text-white">${shots}</strong></span><span class="rounded bg-white/5 px-1.5 py-0.5">Passes <strong class="text-cyanfc">${passPct}</strong></span><span class="rounded bg-white/5 px-1.5 py-0.5">Tacles <strong class="text-volt">${tackles}</strong></span></div>`;
+    }
+
+    function renderFormTrend(matches) {
+      const recent = matches.slice(-5);
+      if (!recent.length) return '';
+      const dots = recent.map((m) => {
+        if (m.outcome === 'W') return '<span title="Victoire" class="inline-flex h-5 w-5 items-center justify-center rounded bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300">V</span>';
+        if (m.outcome === 'D') return '<span title="Nul" class="inline-flex h-5 w-5 items-center justify-center rounded bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300">N</span>';
+        return '<span title="Défaite" class="inline-flex h-5 w-5 items-center justify-center rounded bg-rose-500/20 border border-rose-500/40 text-[10px] font-bold text-rose-300">D</span>';
+      }).join('');
+      return `<div class="flex items-center gap-1 text-[11px] text-slate-400"><span class="mr-0.5">Tendance:</span>${dots}</div>`;
+    }
+
     function renderMatchTable(title, badge, badgeCls, matches) {
       const s = computeMatchSummary(matches);
       const body = matches.length
@@ -1391,13 +1421,13 @@
               D: { l: 'N', c: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
               L: { l: 'D', c: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
             }[m.outcome] || { l: '-', c: 'bg-slate-500/20 text-slate-300 border-slate-500/30' };
-            const dt = m.dateStr || m.formattedDate || (m.timestamp ? String(m.timestamp).slice(0, 10) : '-');
-            const sn = m.season ? `S${m.season}` : '-';
-            return `<tr data-match-id="${m.id}" class="match-card-btn cursor-pointer transition ${sel ? 'bg-volt/15 text-white' : 'hover:bg-white/5 text-slate-200'}"><td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${dt}</td><td class="px-3 py-2 text-xs font-medium text-white">${m.opponentName || 'Adversaire'}</td><td class="px-3 py-2 text-center"><span class="inline-block rounded border px-1.5 py-0.5 text-[11px] font-bold ${res.c}">${res.l}</span></td><td class="px-3 py-2 text-center font-display text-sm font-bold text-white whitespace-nowrap">${gf} - ${ga}</td><td class="px-3 py-2 text-center text-xs font-semibold ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-slate-400'}">${fmtDiff(diff)}</td><td class="px-3 py-2 text-right text-[11px] text-slate-400">${sn}</td></tr>`;
+            const dt = getMatchDateLabel(m);
+            const statsHtml = getMatchStatsSummary(m);
+            return `<tr data-match-id="${m.id}" class="match-card-btn cursor-pointer transition ${sel ? 'bg-volt/15 text-white' : 'hover:bg-white/5 text-slate-200'}"><td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${dt}</td><td class="px-3 py-2 text-xs font-medium text-white">${m.opponentName || 'Adversaire'}</td><td class="px-3 py-2 text-center"><span class="inline-block rounded border px-1.5 py-0.5 text-[11px] font-bold ${res.c}">${res.l}</span></td><td class="px-3 py-2 text-center font-display text-sm font-bold text-white whitespace-nowrap">${gf} - ${ga}</td><td class="px-3 py-2 text-center text-xs font-semibold ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-slate-400'}">${fmtDiff(diff)}</td><td class="px-3 py-2 text-right">${statsHtml}</td></tr>`;
           }).join('')
         : `<tr><td colspan="6" class="px-3 py-4 text-center text-xs text-slate-400">Aucun match.</td></tr>`;
 
-      return `<div class="rounded-xl border border-white/10 bg-pitch-900/60 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-pitch-950/60 px-3.5 py-2.5"><div class="flex items-center gap-2"><span class="rounded border px-2 py-0.5 text-[11px] font-bold ${badgeCls}">${badge}</span><h4 class="font-display text-sm font-bold text-white">${title}</h4></div><div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-300"><span class="rounded bg-white/5 px-2 py-0.5">MJ <strong class="text-white">${s.mj}</strong></span><span class="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">V <strong>${s.v}</strong></span><span class="rounded bg-amber-500/10 px-2 py-0.5 text-amber-300">N <strong>${s.n}</strong></span><span class="rounded bg-rose-500/10 px-2 py-0.5 text-rose-300">D <strong>${s.d}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BP <strong class="text-white">${s.bp}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BC <strong class="text-white">${s.bc}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">Diff <strong class="${s.diff > 0 ? 'text-emerald-400' : s.diff < 0 ? 'text-rose-400' : 'text-white'}">${fmtDiff(s.diff)}</strong></span></div></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="border-b border-white/10 bg-pitch-950/30 text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Adversaire</th><th class="px-3 py-2 text-center">Rés.</th><th class="px-3 py-2 text-center">Score</th><th class="px-3 py-2 text-center">Diff</th><th class="px-3 py-2 text-right">Saison</th></tr></thead><tbody class="divide-y divide-white/5">${body}</tbody></table></div></div>`;
+      return `<div class="rounded-xl border border-white/10 bg-pitch-900/60 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-pitch-950/60 px-3.5 py-2.5"><div class="flex flex-wrap items-center gap-2"><span class="rounded border px-2 py-0.5 text-[11px] font-bold ${badgeCls}">${badge}</span><h4 class="font-display text-sm font-bold text-white">${title}</h4>${renderFormTrend(matches)}</div><div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-300"><span class="rounded bg-white/5 px-2 py-0.5">MJ <strong class="text-white">${s.mj}</strong></span><span class="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">V <strong>${s.v}</strong></span><span class="rounded bg-amber-500/10 px-2 py-0.5 text-amber-300">N <strong>${s.n}</strong></span><span class="rounded bg-rose-500/10 px-2 py-0.5 text-rose-300">D <strong>${s.d}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BP <strong class="text-white">${s.bp}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">BC <strong class="text-white">${s.bc}</strong></span><span class="rounded bg-white/5 px-2 py-0.5">Diff <strong class="${s.diff > 0 ? 'text-emerald-400' : s.diff < 0 ? 'text-rose-400' : 'text-white'}">${fmtDiff(s.diff)}</strong></span></div></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="border-b border-white/10 bg-pitch-950/30 text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Adversaire</th><th class="px-3 py-2 text-center">Rés.</th><th class="px-3 py-2 text-center">Score</th><th class="px-3 py-2 text-center">Diff</th><th class="px-3 py-2 text-right">Stats match</th></tr></thead><tbody class="divide-y divide-white/5">${body}</tbody></table></div></div>`;
     }
 
     function renderMatchesList() {
