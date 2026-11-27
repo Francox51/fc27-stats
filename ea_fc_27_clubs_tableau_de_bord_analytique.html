@@ -1397,11 +1397,6 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
               <td class="px-4 py-3 font-semibold text-white">${p.name}</td>
               <td class="px-3 py-3"><span class="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">${p.position}</span></td>
               <td class="px-3 py-3 text-center text-slate-300">${p.apps}</td>
-              <td class="px-3 py-3 text-center">
-                <span class="inline-block rounded-lg border px-2 py-0.5 font-display font-bold ${ratingBadge}">
-                  ${p.avgRating > 0 ? p.avgRating.toFixed(2) : '—'}
-                </span>
-              </td>
               <td class="px-3 py-3 text-center font-semibold text-white">${p.goals}</td>
               <td class="px-3 py-3 text-center text-slate-200">${p.assists}</td>
               <td class="px-3 py-3 text-center font-bold text-cyanfc">${p.ga}</td>
@@ -1413,7 +1408,7 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
               <td class="px-3 py-3 text-center">${p.cleanSheet > 0 ? `<span class="rounded-md bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">${p.cleanSheet}</span>` : '<span class="text-slate-600">0</span>'}</td>
               <td class="px-3 py-3 text-center">${p.redCards > 0 ? `<span class="rounded-md bg-rose-500/20 px-2 py-0.5 font-semibold text-rose-300">${p.redCards}</span>` : '<span class="text-slate-600">0</span>'}</td>
               <td class="px-3 py-3 text-center">${p.saves > 0 ? `<span class="font-semibold text-sky-300">${p.saves}</span>` : '<span class="text-slate-600">0</span>'}</td>
-              <td class="px-3 py-3 text-center">${p.mom > 0 ? `<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-amber-300 font-semibold">★ ${p.mom}</span>` : '<span class="text-slate-600">0</span>'}</td>
+              <td class="px-3 py-3 text-center"><span class="text-slate-600">0</span></td>
             </tr>
           `;
         })
