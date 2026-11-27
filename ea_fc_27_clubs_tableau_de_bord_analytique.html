@@ -1457,7 +1457,36 @@
       }
       const league = state.matches.filter((m) => (m.matchType || 'leagueMatch') === 'leagueMatch');
       const playoffs = state.matches.filter((m) => m.matchType === 'playoffMatch');
-      container.innerHTML = `<div class="space-y-4">${renderMatchTable('Championnat (leagueMatch)', 'LIGUE', 'border-cyanfc/30 bg-cyanfc/15 text-cyanfc', league)}${renderMatchTable('Playoffs (playoffMatch)', 'PLAYOFFS', 'border-volt/30 bg-volt/15 text-volt', playoffs)}</div>`;
+      const mkOpts = (arr) => arr.map((m) => { const myS = m.myStats || {}; const gf = typeof m.gf === 'number' ? m.gf : (myS.goals || 0); const ga = typeof m.ga === 'number' ? m.ga : 0; const lbl = m.outcome === 'W' ? 'V' : m.outcome === 'D' ? 'N' : m.outcome === 'L' ? 'D' : '-'; const sel = String(m.id) === String(state.selectedMatchId) ? ' selected' : ''; return `<option value="${m.id}"${sel}>[${lbl}] ${getMatchDateLabel(m)} — ${m.opponentName || 'Adversaire'} (${gf}-${ga})</option>`; }).join('');
+      container.innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/10 bg-pitch-900/60 p-3"><label for="matchSelectDropdown" class="text-xs font-semibold uppercase tracking-wider text-slate-300">Sélectionner un match (${state.matches.length})</label><select id="matchSelectDropdown" class="w-full sm:w-auto min-w-[280px] rounded-lg border border-white/15 bg-pitch-950 px-3 py-2 text-xs text-white focus:border-volt focus:outline-none">${league.length ? `<optgroup label="Championnat (${league.length})">${mkOpts(league)}</optgroup>` : ''}${playoffs.length ? `<optgroup label="Playoffs (${playoffs.length})">${mkOpts(playoffs)}</optgroup>` : ''}</select></div><div id="matchFullTablesWrap" class="hidden mt-3 space-y-4">${renderMatchTable('Championnat (leagueMatch)', 'LIGUE', 'border-cyanfc/30 bg-cyanfc/15 text-cyanfc', league)}${renderMatchTable('Playoffs (playoffMatch)', 'PLAYOFFS', 'border-volt/30 bg-volt/15 text-volt', playoffs)}</div>`;
+      const selEl = document.getElementById('matchSelectDropdown');
+      if (selEl) { selEl.onchange = () => { state.selectedMatchId = selEl.value; renderMatchDetail(state.selectedMatchId); }; }
+    }
+
+    function getMatchEvaluationEntry(matchId) {
+      const map = state.matchEvaluations || {};
+      return map[String(matchId)] || map[Number(matchId)] || null;
+    }
+
+    function formatNote20Badge(note, label = 'Note /20') {
+      if (typeof note !== 'number' || Number.isNaN(note)) {
+        return `<span class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-400">${label}: —</span>`;
+      }
+      const colorCls = note >= 15
+        ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+        : note >= 11
+          ? 'border-cyanfc/40 bg-cyanfc/15 text-cyanfc'
+          : 'border-rose-500/40 bg-rose-500/15 text-rose-300';
+      return `<span class="rounded-lg border px-2.5 py-1 text-xs font-bold ${colorCls}">${label}: ${note.toFixed(1)}/20</span>`;
+    }
+
+    function renderTrendBadges(tendances = []) {
+      if (!Array.isArray(tendances) || tendances.length === 0) {
+        return `<span class="text-xs text-slate-400">Aucune tendance enregistrée</span>`;
+      }
+      return tendances.map((t) =>
+        `<span class="inline-flex items-center rounded-md border border-volt/30 bg-volt/10 px-2 py-0.5 text-[11px] font-semibold text-volt">${t}</span>`
+      ).join('');
     }
 
     function renderMatchDetail(matchId) {
@@ -1478,6 +1507,31 @@
       });
       const matchPlayers = Array.from(uniqueMatchPlayersMap.values())
         .sort((a, b) => b.rating - a.rating);
+
+      const evalEntry = getMatchEvaluationEntry(matchId);
+      const clubEval = evalEntry && evalEntry.club ? evalEntry.club : null;
+      const oppEval = evalEntry && evalEntry.adversaire ? evalEntry.adversaire : null;
+
+      const evalBannerHtml = `
+        <div id="matchEvalBlock" class="mb-3 rounded-xl border border-white/10 bg-pitch-950/70 p-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Évaluation match</span>
+              ${formatNote20Badge(clubEval ? clubEval.note_20 : null, match.myClubName || 'Club')}
+              ${oppEval ? formatNote20Badge(oppEval.note_20, match.opponentName || 'Adversaire') : ''}
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${renderTrendBadges(clubEval ? clubEval.tendances : [])}
+            </div>
+          </div>
+          ${oppEval && Array.isArray(oppEval.tendances) && oppEval.tendances.length > 0 ? `
+            <div class="mt-2 flex flex-wrap items-center gap-1.5 border-t border-white/5 pt-2 text-[11px] text-slate-400">
+              <span>Tendances adversaire :</span>
+              ${oppEval.tendances.map((t) => `<span class="rounded border border-white/10 bg-white/5 px-2 py-0.5 text-slate-200">${t}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
 
       let teamCompareHtml = '';
       if (match.myStats) {
@@ -1553,7 +1607,7 @@
         </div>
       `;
 
-      box.innerHTML = teamCompareHtml + playersHtml;
+      box.innerHTML = evalBannerHtml + teamCompareHtml + playersHtml;
     }
 
     // --- DONNÉES DE DÉMONSTRATION (Structure identique à EA FC 27) ---
