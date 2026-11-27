@@ -339,7 +339,6 @@
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="cleanSheet">CS</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="redCards">CR</th>
                 <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="saves">Arrêts</th>
-                <th class="cursor-pointer px-3 py-3 text-center hover:text-white" data-sort="mom">HDM</th>
               </tr>
             </thead>
             <tbody id="playersTableBody" class="divide-y divide-white/5 bg-pitch-950/40">
@@ -1408,7 +1407,6 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
               <td class="px-3 py-3 text-center">${p.cleanSheet > 0 ? `<span class="rounded-md bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">${p.cleanSheet}</span>` : '<span class="text-slate-600">0</span>'}</td>
               <td class="px-3 py-3 text-center">${p.redCards > 0 ? `<span class="rounded-md bg-rose-500/20 px-2 py-0.5 font-semibold text-rose-300">${p.redCards}</span>` : '<span class="text-slate-600">0</span>'}</td>
               <td class="px-3 py-3 text-center">${p.saves > 0 ? `<span class="font-semibold text-sky-300">${p.saves}</span>` : '<span class="text-slate-600">0</span>'}</td>
-              <td class="px-3 py-3 text-center"><span class="text-slate-600">0</span></td>
             </tr>
           `;
         })
