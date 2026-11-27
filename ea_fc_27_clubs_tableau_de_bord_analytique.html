@@ -1445,12 +1445,21 @@
             const ev = typeof getMatchEvaluationEntry === 'function' ? getMatchEvaluationEntry(m.id) : null;
             const clubEv = ev && ev.club ? ev.club : null;
             const trends = clubEv && Array.isArray(clubEv.tendances) ? clubEv.tendances : [];
-            const noteVal = clubEv && typeof clubEv.note_20 === 'number' && !Number.isNaN(clubEv.note_20)
-              ? `<span class="ml-1 text-[10px] font-bold text-cyanfc">${clubEv.note_20.toFixed(1)}/20</span>`
-              : '';
-            const trendCellHtml = trends.length
-              ? `<div class="flex flex-wrap items-center gap-1">${trends.map((t) => `<span class="inline-block rounded border border-volt/30 bg-volt/10 px-1.5 py-0.5 text-[10px] font-semibold text-volt whitespace-nowrap">${t}</span>`).join('')}${noteVal}</div>`
-              : `<span class="text-[11px] text-slate-500">—</span>${noteVal}`;
+            const rawNote = clubEv ? clubEv.note_20 : null;
+            const numNote = rawNote !== null && rawNote !== undefined && rawNote !== '' ? Number(rawNote) : NaN;
+            const hasNote = !Number.isNaN(numNote);
+            const noteBadgeCls = !hasNote
+              ? 'border-white/10 bg-white/5 text-slate-400'
+              : numNote >= 13
+                ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                : numNote >= 10
+                  ? 'border-cyanfc/40 bg-cyanfc/15 text-cyanfc'
+                  : 'border-rose-500/40 bg-rose-500/15 text-rose-300';
+            const noteVal = `<span class="inline-block rounded border px-1.5 py-0.5 text-[11px] font-bold whitespace-nowrap ${noteBadgeCls}">${hasNote ? `${numNote.toFixed(1)}/20` : '—/20'}</span>`;
+            const trendBadgesHtml = trends.length
+              ? trends.map((t) => `<span class="inline-block rounded border border-volt/35 bg-volt/10 px-1.5 py-0.5 text-[11px] font-semibold text-volt whitespace-nowrap">${t}</span>`).join('')
+              : `<span class="text-[11px] text-slate-500">Aucune tendance</span>`;
+            const trendCellHtml = `<div class="flex flex-wrap items-center gap-1.5">${noteVal}${trendBadgesHtml}</div>`;
             return `<tr data-match-id="${m.id}" class="match-card-btn cursor-pointer transition ${sel ? 'bg-volt/15 text-white' : 'hover:bg-white/5 text-slate-200'}"><td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${dt}</td><td class="px-3 py-2 text-xs font-medium text-white">${m.opponentName || 'Adversaire'}</td><td class="px-3 py-2 text-center"><span class="inline-block rounded border px-1.5 py-0.5 text-[11px] font-bold ${res.c}">${res.l}</span></td><td class="px-3 py-2 text-center font-display text-sm font-bold text-white whitespace-nowrap">${gf} - ${ga}</td><td class="px-3 py-2 text-center text-xs font-semibold ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-slate-400'}">${fmtDiff(diff)}</td><td class="px-3 py-2 text-left">${trendCellHtml}</td><td class="px-3 py-2 text-right">${statsHtml}</td></tr>`;
           }).join('')
         : `<tr><td colspan="7" class="px-3 py-4 text-center text-xs text-slate-400">Aucun match.</td></tr>`;
