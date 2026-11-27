@@ -397,6 +397,10 @@
       './joueurs_matchs_fc27.json',
       'https://raw.githubusercontent.com/Francox51/fc27-stats/main/joueurs_matchs_fc27.json',
     ];
+    const AUTO_OPPONENT_PLAYERS_URLS = [
+      './adversaires_joueurs_fc27.json',
+      'https://raw.githubusercontent.com/Francox51/fc27-stats/main/adversaires_joueurs_fc27.json',
+    ];
 
     const AUTO_EVALUATIONS_URLS = [
       './evaluation_matchs_fc27.json',
@@ -408,6 +412,7 @@
       isDemo: true,
       rawMatches: [],
       rawExternalPlayers: [],
+      rawOpponentPlayers: [],
       detectedClubs: [],
       selectedClubId: null,
       matches: [],
@@ -558,9 +563,10 @@
     }
 
     async function autoLoadMatchData() {
-      const [matchRows, playerRows, evaluationMap] = await Promise.all([
+      const [matchRows, playerRows, oppPlayerRows, evaluationMap] = await Promise.all([
         fetchJsonRowsFromUrls(AUTO_MATCHES_URLS),
         fetchJsonRowsFromUrls(AUTO_PLAYERS_URLS),
+        fetchJsonRowsFromUrls(AUTO_OPPONENT_PLAYERS_URLS),
         fetchJsonObjectFromUrls(AUTO_EVALUATIONS_URLS),
       ]);
 
@@ -570,6 +576,7 @@
         state.isDemo = false;
         state.rawMatches = matchRows;
         state.rawExternalPlayers = Array.isArray(playerRows) ? playerRows : [];
+        state.rawOpponentPlayers = Array.isArray(oppPlayerRows) ? oppPlayerRows : [];
         state.detectedClubs = detectClubsInRawMatches(state.rawMatches);
         state.selectedClubId = state.detectedClubs[0]?.id || null;
         state.selectedMatchId = null;
@@ -891,6 +898,7 @@
           }
         });
       }
+      if(Array.isArray(state.rawOpponentPlayers)&&state.rawOpponentPlayers.length>0){const mm=new Map(parsedMatches.map(m=>[String(m.id),m]));const seen=new Set();state.rawOpponentPlayers.forEach((pl,i)=>{const n=normalizePlayerRow(pl,'',i);const tm=mm.get(String(n.matchId));if(!tm||(tm.myClubId&&n.clubId&&String(n.clubId)===String(tm.myClubId)))return;const k=`${n.matchId}::${n.clubId||''}::${String(n.playerId||n.name||'').trim().toLowerCase()}`;if(seen.has(k))return;seen.add(k);if(!tm.oppStats)tm.oppStats={clubId:n.clubId||tm.opponentId||null,name:tm.opponentName||'Adversaire',goals:tm.ga||0,shots:0,passesMade:0,passAttempts:0,tacklesMade:0,tackleAttempts:0};tm.oppStats.shots+=n.shots;tm.oppStats.passesMade+=n.passesMade;tm.oppStats.passAttempts+=n.passAttempts;tm.oppStats.tacklesMade+=n.tacklesMade;tm.oppStats.tackleAttempts+=n.tackleAttempts;});}
 
       // Trier les matchs du plus récent au plus ancien
       parsedMatches.sort((a, b) => (b.ts || 0) - (a.ts || 0));
