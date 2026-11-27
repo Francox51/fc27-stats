@@ -398,6 +398,11 @@
       'https://raw.githubusercontent.com/Francox51/fc27-stats/main/joueurs_matchs_fc27.json',
     ];
 
+    const AUTO_EVALUATIONS_URLS = [
+      './evaluation_matchs_fc27.json',
+      'https://raw.githubusercontent.com/Francox51/fc27-stats/main/evaluation_matchs_fc27.json',
+    ];
+
     // --- ÉTAT GLOBAL ---
     const state = {
       isDemo: true,
@@ -533,11 +538,33 @@
       return null;
     }
 
+    async function fetchJsonObjectFromUrls(urls) {
+      const cacheBust = `t=${Date.now()}`;
+      for (const baseUrl of urls) {
+        try {
+          const separator = baseUrl.includes('?') ? '&' : '?';
+          const url = `${baseUrl}${separator}${cacheBust}`;
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) continue;
+          const parsed = await response.json();
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length > 0) {
+            return parsed;
+          }
+        } catch (err) {
+          console.warn('Tentative de chargement auto évaluation échouée pour', baseUrl, err);
+        }
+      }
+      return null;
+    }
+
     async function autoLoadMatchData() {
-      const [matchRows, playerRows] = await Promise.all([
+      const [matchRows, playerRows, evaluationMap] = await Promise.all([
         fetchJsonRowsFromUrls(AUTO_MATCHES_URLS),
         fetchJsonRowsFromUrls(AUTO_PLAYERS_URLS),
+        fetchJsonObjectFromUrls(AUTO_EVALUATIONS_URLS),
       ]);
+
+      state.matchEvaluations = (evaluationMap && typeof evaluationMap === 'object') ? evaluationMap : {};
 
       if (matchRows && matchRows.length > 0) {
         state.isDemo = false;
@@ -1372,12 +1399,26 @@
                 </div>
                 <span class="text-[11px] text-slate-400">${m.dateLabel}</span>
               </div>
-              <div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                ${m.myStats ? `<span>Tirs : <strong class="text-slate-200">${m.myStats.shots}</strong></span>` : ''}
-                ${myPassPct ? `<span>Passes : <strong class="text-slate-200">${myPassPct}</strong></span>` : ''}
-                ${m.myStats ? `<span>Tacles : <strong class="text-slate-200">${m.myStats.tacklesMade}/${m.myStats.tackleAttempts}</strong></span>` : ''}
-                <span class="ml-auto text-volt/90 font-medium">Détails →</span>
-              </div>
+              ${(() => {
+                const matchKey = String(m.raw?.matchId ?? m.matchId ?? m.id ?? '');
+                const ev = state.matchEvaluations?.[matchKey]?.club || null;
+                const note20 = typeof ev?.note_20 === 'number' ? `${ev.note_20.toFixed(1)}/20` : null;
+                const trends = Array.isArray(ev?.tendances) ? ev.tendances : [];
+                return `
+                  <div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                    ${note20 ? `<span class="rounded border border-volt/35 bg-volt/10 px-1.5 py-0.5 font-semibold text-volt">Note : ${note20}</span>` : ''}
+                    ${m.myStats ? `<span>Tirs : <strong class="text-slate-200">${m.myStats.shots}</strong></span>` : ''}
+                    ${myPassPct ? `<span>Passes : <strong class="text-slate-200">${myPassPct}</strong></span>` : ''}
+                    ${m.myStats ? `<span>Tacles : <strong class="text-slate-200">${m.myStats.tacklesMade}/${m.myStats.tackleAttempts}</strong></span>` : ''}
+                    <span class="ml-auto text-volt/90 font-medium">Détails →</span>
+                  </div>
+                  ${trends.length > 0 ? `
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      ${trends.map((t) => `<span class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-200">${t}</span>`).join('')}
+                    </div>
+                  ` : ''}
+                `;
+              })()}
             </button>
           `;
         })

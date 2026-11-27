@@ -1,0 +1,441 @@
+{
+  "205142866510424": {
+    "matchId": 205142866510424,
+    "club": {
+      "note_20": 13.0,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "205320552140025": {
+    "matchId": 205320552140025,
+    "club": {
+      "note_20": 8.6,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "208752984330058": {
+    "matchId": 208752984330058,
+    "club": {
+      "note_20": 8.3,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "208792652340218": {
+    "matchId": 208792652340218,
+    "club": {
+      "note_20": 11.0,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "208844843570267": {
+    "matchId": 208844843570267,
+    "club": {
+      "note_20": 9.4,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "208854595730491": {
+    "matchId": 208854595730491,
+    "club": {
+      "note_20": 15.0,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "209044483390437": {
+    "matchId": 209044483390437,
+    "club": {
+      "note_20": 14.0,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "209088075590275": {
+    "matchId": 209088075590275,
+    "club": {
+      "note_20": 14.5,
+      "tendances": [
+        "Domination sans finition"
+      ]
+    }
+  },
+  "209134117200422": {
+    "matchId": 209134117200422,
+    "club": {
+      "note_20": 13.3,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "209202064040464": {
+    "matchId": 209202064040464,
+    "club": {
+      "note_20": 13.1,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210218989510173": {
+    "matchId": 210218989510173,
+    "club": {
+      "note_20": 14.5,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210234797760028": {
+    "matchId": 210234797760028,
+    "club": {
+      "note_20": 11.5,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "210318926990365": {
+    "matchId": 210318926990365,
+    "club": {
+      "note_20": 16.9,
+      "tendances": [
+        "Très gros match collectif",
+        "Construction propre et efficace"
+      ]
+    },
+    "adversaire": {
+      "note_20": 12.3,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "210530008930019": {
+    "matchId": 210530008930019,
+    "club": {
+      "note_20": 11.0,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210572075530325": {
+    "matchId": 210572075530325,
+    "club": {
+      "note_20": 9.1,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210632217120356": {
+    "matchId": 210632217120356,
+    "club": {
+      "note_20": 15.6,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    },
+    "adversaire": {
+      "note_20": 9.4,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210716120600290": {
+    "matchId": 210716120600290,
+    "club": {
+      "note_20": 13.8,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    },
+    "adversaire": {
+      "note_20": 10.3,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "210736159500498": {
+    "matchId": 210736159500498,
+    "club": {
+      "note_20": 16.0,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    },
+    "adversaire": {
+      "note_20": 11.1,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "211688987010058": {
+    "matchId": 211688987010058,
+    "club": {
+      "note_20": 12.9,
+      "tendances": [
+        "Construction propre et efficace",
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 4.4,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "211878342290426": {
+    "matchId": 211878342290426,
+    "club": {
+      "note_20": 18.0,
+      "tendances": [
+        "Construction propre et efficace"
+      ]
+    },
+    "adversaire": {
+      "note_20": 14.6,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "211978387730235": {
+    "matchId": 211978387730235,
+    "club": {
+      "note_20": 14.9,
+      "tendances": [
+        "Construction propre et efficace"
+      ]
+    },
+    "adversaire": {
+      "note_20": 11.1,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "212016121480354": {
+    "matchId": 212016121480354,
+    "club": {
+      "note_20": 12.6,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    },
+    "adversaire": {
+      "note_20": 7.4,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "212028422260302": {
+    "matchId": 212028422260302,
+    "club": {
+      "note_20": 17.5,
+      "tendances": [
+        "Construction propre et efficace",
+        "Match disputé"
+      ]
+    },
+    "adversaire": {
+      "note_20": 11.0,
+      "tendances": [
+        "Construction propre et efficace",
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "212148102550327": {
+    "matchId": 212148102550327,
+    "club": {
+      "note_20": 12.3,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 5.1,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214178946470009": {
+    "matchId": 214178946470009,
+    "club": {
+      "note_20": 17.5,
+      "tendances": [
+        "Construction propre et efficace",
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 10.7,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    }
+  },
+  "214418744780313": {
+    "matchId": 214418744780313,
+    "club": {
+      "note_20": 12.9,
+      "tendances": [
+        "Domination sans finition"
+      ]
+    },
+    "adversaire": {
+      "note_20": 7.1,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "214466456440206": {
+    "matchId": 214466456440206,
+    "club": {
+      "note_20": 14.3,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 15.0,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "214482599640090": {
+    "matchId": 214482599640090,
+    "club": {
+      "note_20": 10.7,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 5.9,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214500513770380": {
+    "matchId": 214500513770380,
+    "club": {
+      "note_20": 10.3,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    },
+    "adversaire": {
+      "note_20": 12.1,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214542071810128": {
+    "matchId": 214542071810128,
+    "club": {
+      "note_20": 12.0,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    },
+    "adversaire": {
+      "note_20": 2.6,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214558223870288": {
+    "matchId": 214558223870288,
+    "club": {
+      "note_20": 11.4,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    },
+    "adversaire": {
+      "note_20": 10.8,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214570159280340": {
+    "matchId": 214570159280340,
+    "club": {
+      "note_20": 15.9,
+      "tendances": [
+        "Construction propre et efficace"
+      ]
+    },
+    "adversaire": {
+      "note_20": 7.3,
+      "tendances": [
+        "Match subi",
+        "Stérilité offensive"
+      ]
+    }
+  },
+  "214588078680137": {
+    "matchId": 214588078680137,
+    "club": {
+      "note_20": 11.7,
+      "tendances": [
+        "Jeu direct tranchant"
+      ]
+    },
+    "adversaire": {
+      "note_20": 11.6,
+      "tendances": [
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "214616444380257": {
+    "matchId": 214616444380257,
+    "club": {
+      "note_20": 14.2,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    },
+    "adversaire": {
+      "note_20": 11.6,
+      "tendances": [
+        "Stérilité offensive"
+      ]
+    }
+  }
+}
