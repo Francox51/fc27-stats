@@ -1612,7 +1612,20 @@
       document.getElementById('btnReset').addEventListener('click', () => {
         fileInput.value = '';
         document.getElementById('toastBox').classList.add('hidden');
-        autoLoadMatchData();
+        const matchesListEl = document.getElementById('matchesList');
+      if (matchesListEl) {
+        matchesListEl.addEventListener('click', (e) => {
+          const row = e.target.closest('.match-card-btn[data-match-id]');
+          if (!row) return;
+          const matchId = row.getAttribute('data-match-id');
+          if (!matchId) return;
+          state.selectedMatchId = matchId;
+          renderMatchesList();
+          renderMatchDetail(matchId);
+        });
+      }
+
+      autoLoadMatchData();
       });
 
       document.getElementById('playerChartMetric').addEventListener('change', renderPlayersChart);
