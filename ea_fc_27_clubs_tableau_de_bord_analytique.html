@@ -572,6 +572,22 @@
 
       state.matchEvaluations = (evaluationMap && typeof evaluationMap === 'object') ? evaluationMap : {};
 
+    function getMatchEvaluationEntry(matchId) {
+      if (!matchId && matchId !== 0) return null;
+      const key = String(matchId).trim();
+      const map = state.matchEvaluations;
+      if (!map || typeof map !== 'object') return null;
+      if (Object.prototype.hasOwnProperty.call(map, key) && map[key]) {
+        return map[key];
+      }
+      for (const val of Object.values(map)) {
+        if (val && typeof val === 'object' && String(val.matchId || '').trim() === key) {
+          return val;
+        }
+      }
+      return null;
+    }
+
       if (matchRows && matchRows.length > 0) {
         state.isDemo = false;
         state.rawMatches = matchRows;
