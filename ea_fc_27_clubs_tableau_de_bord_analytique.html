@@ -427,6 +427,7 @@
         players: null,
       },
     };
+    window.state = state;
 
     // --- UTILITAIRES ---
     function toNum(val, fallback = 0) {
@@ -595,7 +596,8 @@
           'success'
         );
         return;
-      }
+            if (typeof window.updateDevAxes === "function") window.updateDevAxes();
+    }
 
       loadDemoData();
       showToast(
