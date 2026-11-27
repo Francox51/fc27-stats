@@ -437,5 +437,65 @@
         "Stérilité offensive"
       ]
     }
+  },
+  "216156736240393": {
+    "matchId": 216156736240393,
+    "club": {
+      "note_20": 8.8,
+      "tendances": [
+        "Défense à ajuster",
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "216332210360359": {
+    "matchId": 216332210360359,
+    "club": {
+      "note_20": 16.2,
+      "tendances": [
+        "Attaque prolifique",
+        "Victoire en playoff"
+      ]
+    }
+  },
+  "216084657930145": {
+    "matchId": 216084657930145,
+    "club": {
+      "note_20": 9.9,
+      "tendances": [
+        "Match accroché",
+        "Défaite d'un but"
+      ]
+    }
+  },
+  "216110543070131": {
+    "matchId": 216110543070131,
+    "club": {
+      "note_20": 8.8,
+      "tendances": [
+        "Défense à ajuster",
+        "Profil équilibré / standard"
+      ]
+    }
+  },
+  "216126445220174": {
+    "matchId": 216126445220174,
+    "club": {
+      "note_20": 9.9,
+      "tendances": [
+        "Match accroché",
+        "Défaite d'un but"
+      ]
+    }
+  },
+  "215874894590395": {
+    "matchId": 215874894590395,
+    "club": {
+      "note_20": 9.9,
+      "tendances": [
+        "Match accroché",
+        "Défaite d'un but"
+      ]
+    }
   }
 }
