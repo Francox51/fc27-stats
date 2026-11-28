@@ -595,8 +595,8 @@
           `Données chargées : ${state.matches.length} matchs et ${playerInfo} pour ${clubLabel}.`,
           'success'
         );
+        if (typeof window.updateDevAxes === "function") window.updateDevAxes();
         return;
-            if (typeof window.updateDevAxes === "function") window.updateDevAxes();
     }
 
       loadDemoData();
@@ -1108,6 +1108,8 @@
       renderPlayersTable();
       renderMatchesList();
       renderMatchDetail(state.selectedMatchId);
+      setTimeout(() => { if (typeof window.updateDevAxes === 'function') window.updateDevAxes(); }, 150);
+      if (typeof window.updateDevAxes === "function") window.updateDevAxes();
     }
 
     // --- RENDU DES 6 KPIs ---
@@ -1839,24 +1841,9 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
 <script id="devAxesScript">
 (function(){
   const BENCH = {
-    shots: {
-      min: 15, max: 55,
-      top75: 30.8, ref: 42.0, top25: 51.9,
-      q1: 30.8, med: 40.0, q3: 51.9,
-      label: "Tirs"
-    },
-    passes: {
-      min: 70, max: 90,
-      top75: 76.5, ref: 79.7, top25: 83.5,
-      q1: 76.5, med: 80.5, q3: 83.5,
-      label: "Passes"
-    },
-    tackles: {
-      min: 10, max: 60,
-      top75: 25.3, ref: 34.2, top25: 42.4,
-      q1: 25.3, med: 33.8, q3: 42.4,
-      label: "Tacles"
-    }
+    shots:   { min: 15, max: 55, top75: 30.8, ref: 42.0, top25: 51.9, q1: 30.8, med: 40.0, q3: 51.9, label: "Tirs" },
+    passes:  { min: 70, max: 90, top75: 76.5, ref: 79.7, top25: 83.5, q1: 76.5, med: 80.5, q3: 83.5, label: "Passes" },
+    tackles: { min: 10, max: 60, top75: 25.3, ref: 34.2, top25: 42.4, q1: 25.3, med: 33.8, q3: 42.4, label: "Tacles" }
   };
 
   function getHistories(){
@@ -1864,101 +1851,53 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
     const rows = Array.isArray(st.normalizedPlayers) ? st.normalizedPlayers : [];
     const selClub = st.selectedClubId ? String(st.selectedClubId) : null;
 
-    const matchOrder = new Map();
-    if (Array.isArray(st.matches)) {
-      st.matches.forEach((m, idx) => {
-        if (m && m.id != null) matchOrder.set(String(m.id), idx);
-      });
+    let filtered = rows.filter(r => r && typeof r === "object" && r.name);
+    if (selClub) {
+      const byClub = filtered.filter(r => !r.clubId || String(r.clubId) === selClub);
+      if (byClub.length > 0) filtered = byClub;
     }
 
-    const sorted = rows
-      .filter(r => r && typeof r === "object" && r.name)
-      .filter(r => !selClub || !r.clubId || String(r.clubId) === selClub)
-      .slice()
-      .sort((a, b) => {
-        const ia = matchOrder.has(String(a.matchId)) ? matchOrder.get(String(a.matchId)) : 999999;
-        const ib = matchOrder.has(String(b.matchId)) ? matchOrder.get(String(b.matchId)) : 999999;
-        return ia - ib;
-      });
-
     const map = new Map();
-    sorted.forEach(r => {
+    filtered.forEach(r => {
       const name = String(r.name).trim();
       if (!name) return;
+      const shots = Number(r.shots), goals = Number(r.goals);
+      const passesMade = Number(r.passesMade), passAttempts = Number(r.passAttempts);
+      const tacklesMade = Number(r.tacklesMade), tackleAttempts = Number(r.tackleAttempts);
 
-      const shots = Number(r.shots);
-      const goals = Number(r.goals);
-      const passesMade = Number(r.passesMade);
-      const passAttempts = Number(r.passAttempts);
-      const tacklesMade = Number(r.tacklesMade);
-      const tackleAttempts = Number(r.tackleAttempts);
+      const shotPct = (Number.isFinite(shots) && shots > 0 && Number.isFinite(goals)) ? (goals / shots) * 100 : null;
+      const passPct = (Number.isFinite(passAttempts) && passAttempts > 0 && Number.isFinite(passesMade)) ? (passesMade / passAttempts) * 100 : null;
+      const tacklePct = (Number.isFinite(tackleAttempts) && tackleAttempts > 0 && Number.isFinite(tacklesMade)) ? (tacklesMade / tackleAttempts) * 100 : null;
 
-      const shotPct = (Number.isFinite(shots) && shots > 0 && Number.isFinite(goals))
-        ? (goals / shots) * 100
-        : null;
-      const passPct = (Number.isFinite(passAttempts) && passAttempts > 0 && Number.isFinite(passesMade))
-        ? (passesMade / passAttempts) * 100
-        : null;
-      const tacklePct = (Number.isFinite(tackleAttempts) && tackleAttempts > 0 && Number.isFinite(tacklesMade))
-        ? (tacklesMade / tackleAttempts) * 100
-        : null;
-
-      if (!map.has(name)) {
-        map.set(name, {
-          name,
-          position: r.position || "",
-          shots: [],
-          passes: [],
-          tackles: []
-        });
-      }
-      const entry = map.get(name);
-      if (shotPct !== null) entry.shots.push(shotPct);
-      if (passPct !== null) entry.passes.push(passPct);
-      if (tacklePct !== null) entry.tackles.push(tacklePct);
+      if (!map.has(name)) map.set(name, { name, position: r.position || "", shots: [], passes: [], tackles: [] });
+      const e = map.get(name);
+      if (shotPct !== null) e.shots.push(shotPct);
+      if (passPct !== null) e.passes.push(passPct);
+      if (tacklePct !== null) e.tackles.push(tacklePct);
     });
-
     return map;
   }
 
-  function avg(arr){
-    if (!arr || !arr.length) return null;
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
-  }
-
-  function fmtPct(v){
-    return (typeof v === "number" && Number.isFinite(v)) ? v.toFixed(1) + "%" : "N/A";
-  }
-
+  function avg(arr){ return (!arr || !arr.length) ? null : arr.reduce((a, b) => a + b, 0) / arr.length; }
+  function fmtPct(v){ return (typeof v === "number" && Number.isFinite(v)) ? v.toFixed(1) + "%" : "N/A"; }
   function fmtDelta(allV, lastV){
     if (typeof allV !== "number" || typeof lastV !== "number") return "N/A";
     const d = lastV - allV;
-    const sign = d > 0 ? "+" : "";
-    return sign + d.toFixed(1) + " pts";
+    return (d > 0 ? "+" : "") + d.toFixed(1) + " pts";
   }
 
   function gaugeHtml(metricKey, allArr, lastArr){
     const cfg = BENCH[metricKey];
-    const allV = avg(allArr);
-    const lastV = avg(lastArr);
+    const allV = avg(allArr), lastV = avg(lastArr);
     const span = Math.max(1, cfg.max - cfg.min);
     const pctPos = v => Math.max(0, Math.min(100, ((v - cfg.min) / span) * 100));
 
-    const pQ1 = pctPos(cfg.q1);
-    const pMed = pctPos(cfg.med);
-    const pQ3 = pctPos(cfg.q3);
+    const pQ1 = pctPos(cfg.q1), pMed = pctPos(cfg.med), pQ3 = pctPos(cfg.q3);
     const allP = typeof allV === "number" ? pctPos(allV) : null;
     const lastP = typeof lastV === "number" ? pctPos(lastV) : null;
 
-    const wRed = pQ1;
-    const wOrange = Math.max(0, pMed - pQ1);
-    const wLightGreen = Math.max(0, pQ3 - pMed);
-    const wDarkGreen = Math.max(0, 100 - pQ3);
-
     const deltaText = fmtDelta(allV, lastV);
-    const deltaColor = deltaText === "N/A"
-      ? "text-slate-400"
-      : (lastV - allV >= 0 ? "text-emerald-300" : "text-rose-400");
+    const deltaColor = deltaText === "N/A" ? "text-slate-400" : (lastV - allV >= 0 ? "text-emerald-300" : "text-rose-400");
 
     return `
       <div class="w-[345px] min-h-[325px] shrink-0 rounded-2xl border border-slate-700 bg-slate-900/90 p-5 flex flex-col justify-between gap-4">
@@ -1978,15 +1917,13 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
 
         <div class="space-y-1.5">
           <div class="relative h-7 w-full rounded-xl overflow-visible flex border border-slate-600/70">
-            <div class="h-full bg-rose-500/70 rounded-l-xl" style="width:${wRed}%" title="Sous Top 75 (${cfg.top75.toFixed(1)}%)"></div>
-            <div class="h-full bg-amber-500/75" style="width:${wOrange}%" title="Top 75 – Médiane (${cfg.q1.toFixed(1)}% – ${cfg.med.toFixed(1)}%)"></div>
-            <div class="h-full bg-emerald-400/75" style="width:${wLightGreen}%" title="Médiane – Top 25 (${cfg.med.toFixed(1)}% – ${cfg.top25.toFixed(1)}%)"></div>
-            <div class="h-full bg-emerald-800/90 rounded-r-xl" style="width:${wDarkGreen}%" title="Top 25 (> ${cfg.top25.toFixed(1)}%)"></div>
-
-            ${allP !== null ? `<div class="absolute -top-1.5 -bottom-1.5 w-1.5 -translate-x-1/2 rounded-full bg-indigo-400 border border-slate-950 shadow" style="left:${allP}%" title="Tous les matchs: ${fmtPct(allV)}"></div>` : ""}
-            ${lastP !== null ? `<div class="absolute -top-1.5 -bottom-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white border border-slate-950 shadow" style="left:${lastP}%" title="10 derniers matchs: ${fmtPct(lastV)}"></div>` : ""}
+            <div class="h-full bg-rose-500/70 rounded-l-xl" style="width:${pQ1}%"></div>
+            <div class="h-full bg-amber-500/75" style="width:${Math.max(0, pMed - pQ1)}%"></div>
+            <div class="h-full bg-emerald-400/75" style="width:${Math.max(0, pQ3 - pMed)}%"></div>
+            <div class="h-full bg-emerald-800/90 rounded-r-xl" style="width:${Math.max(0, 100 - pQ3)}%"></div>
+            ${allP !== null ? `<div class="absolute -top-1.5 -bottom-1.5 w-1.5 -translate-x-1/2 rounded-full bg-indigo-400 border border-slate-950 shadow" style="left:${allP}%"></div>` : ""}
+            ${lastP !== null ? `<div class="absolute -top-1.5 -bottom-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white border border-slate-950 shadow" style="left:${lastP}%"></div>` : ""}
           </div>
-
           <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
             <span>${cfg.min}%</span>
             <span>${cfg.max}%</span>
@@ -2013,27 +1950,13 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
     `;
   }
 
-  function ensureCardRoom(){
-    const card = document.getElementById("devAxesCard");
-    if (!card) return;
-    card.classList.remove("max-w-6xl");
-    card.classList.add("max-w-none", "w-full");
-    const body = document.getElementById("devAxesBody");
-    if (body) {
-      body.classList.remove("grid", "grid-cols-1", "lg:grid-cols-2");
-      body.classList.add("overflow-x-auto", "pb-2");
-    }
-  }
-
   window.updateDevAxes = function(){
-    ensureCardRoom();
     const sel = document.getElementById("devAxisPlayerSelect");
     const body = document.getElementById("devAxesBody");
     if (!sel || !body) return;
 
     const hist = getHistories();
     const players = [...hist.keys()].sort((a, b) => a.localeCompare(b, "fr"));
-
     if (!players.length) {
       sel.innerHTML = `<option value="">Aucun joueur</option>`;
       body.innerHTML = `<div class="text-sm text-slate-400">Aucune donnée joueur disponible.</div>`;
@@ -2046,38 +1969,25 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
       return `<option value="${name.replace(/"/g, "&quot;")}">${name}${pos}</option>`;
     }).join("");
 
-    if (prev && hist.has(prev)) {
-      sel.value = prev;
-    } else if (hist.has("domo0078")) {
-      sel.value = "domo0078";
-    }
+    if (prev && hist.has(prev)) sel.value = prev;
+    else if (hist.has("domo0078")) sel.value = "domo0078";
 
-    const chosen = sel.value || players[0];
-    const pData = hist.get(chosen);
-    const lastShots = pData.shots.slice(-10);
-    const lastPasses = pData.passes.slice(-10);
-    const lastTackles = pData.tackles.slice(-10);
-
+    const pData = hist.get(sel.value || players[0]);
     body.innerHTML = `
       <div class="flex flex-nowrap items-start gap-5 w-fit">
-        ${gaugeHtml("shots", pData.shots, lastShots)}
-        ${gaugeHtml("passes", pData.passes, lastPasses)}
-        ${gaugeHtml("tackles", pData.tackles, lastTackles)}
+        ${gaugeHtml("shots", pData.shots, pData.shots.slice(-10))}
+        ${gaugeHtml("passes", pData.passes, pData.passes.slice(-10))}
+        ${gaugeHtml("tackles", pData.tackles, pData.tackles.slice(-10))}
       </div>
     `;
   };
 
-  document.addEventListener("change", function(e){
-    if (e.target && e.target.id === "devAxisPlayerSelect") {
-      window.updateDevAxes();
-    }
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.id === "devAxisPlayerSelect") window.updateDevAxes();
   });
 
-  if (document.readyState !== "loading") {
-    window.updateDevAxes();
-  } else {
-    document.addEventListener("DOMContentLoaded", () => window.updateDevAxes());
-  }
+  if (document.readyState !== "loading") window.updateDevAxes();
+  else document.addEventListener("DOMContentLoaded", () => window.updateDevAxes());
 })();
 </script>
 </body>
