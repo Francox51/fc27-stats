@@ -1840,8 +1840,8 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
 (function(){
   const REF_S = 40.63, REF_P = 80.52;
   const BENCH = {
-    shots:  { ref: REF_S, med: 33.33, q1: 20.00, q3: 50.00, label: "Tirs" },
-    passes: { ref: REF_P, med: 80.00, q1: 75.00, q3: 85.00, label: "Passes" }
+    shots:  { min: 15, max: 70, ref: REF_S, med: 33.33, q1: 20.00, q3: 50.00, label: "Tirs" },
+    passes: { min: 60, max: 100, ref: REF_P, med: 80.00, q1: 75.00, q3: 85.00, label: "Passes" }
   };
 
   function getHistories(){
@@ -1918,8 +1918,8 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
     const cfg = BENCH[metricKey];
     const allV = avg(allArr);
     const lastV = avg(lastArr);
-    const maxScale = metricKey === "shots" ? 75 : 100;
-    const pctPos = v => Math.max(0, Math.min(100, (v / maxScale) * 100));
+    const span = Math.max(1, cfg.max - cfg.min);
+    const pctPos = v => Math.max(0, Math.min(100, ((v - cfg.min) / span) * 100));
 
     const q1L = pctPos(cfg.q1);
     const q3R = pctPos(cfg.q3);
@@ -1929,34 +1929,41 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
     const lastP = typeof lastV === "number" ? pctPos(lastV) : null;
 
     return `
-      <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3">
-        <div class="flex items-center justify-between gap-2">
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/90 p-5 space-y-4">
+        <div class="flex items-baseline justify-between gap-3">
           <div>
-            <div class="text-sm font-semibold text-slate-100">${cfg.label}</div>
-            <div class="text-xs text-slate-400">Réf. ${cfg.ref.toFixed(2)}\% · Méd. ${cfg.med.toFixed(2)}% · Q1–Q3 ${cfg.q1.toFixed(0)}–${cfg.q3.toFixed(0)}%</div>
+            <div class="text-lg font-bold text-white">${cfg.label}</div>
+            <div class="text-xs text-slate-400">Réf. ${cfg.ref.toFixed(2)}% · Méd. ${cfg.med.toFixed(2)}% · Q1–Q3 ${cfg.q1.toFixed(0)}–${cfg.q3.toFixed(0)}%</div>
           </div>
-          <div class="text-right text-xs">
-            <span class="text-slate-400">Écart 10M :</span>
-            <strong class="ml-1 text-slate-100">${fmtDelta(allV, lastV)}</strong>
+          <div class="text-right">
+            <div class="text-[11px] uppercase tracking-wider text-slate-400">Écart 10M</div>
+            <div class="text-base font-extrabold text-emerald-300">${fmtDelta(allV, lastV)}</div>
           </div>
         </div>
 
-        <div class="relative h-3 rounded-full bg-slate-800 overflow-visible">
-          <div class="absolute top-0 bottom-0 rounded-full bg-sky-500/25 border border-sky-400/40" style="left:${q1L}\%;width:${Math.max(2, q3R - q1L)}%"></div>
-          <div class="absolute -top-1 -bottom-1 w-0.5 bg-amber-300" style="left:${medP}\%" title="Médiane ${cfg.med}%"></div>
-          <div class="absolute -top-1 -bottom-1 w-0.5 bg-emerald-400" style="left:${refP}\%" title="Référence ${cfg.ref}%"></div>
-          ${allP !== null ? `<div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3.5 w-3.5 rounded-full bg-indigo-400 ring-2 ring-slate-950" style="left:${allP}%" title="Tous matchs: ${fmtPct(allV)}"></div>` : ""}
-          ${lastP !== null ? `<div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full bg-white ring-2 ring-indigo-500" style="left:${lastP}%" title="10 derniers: ${fmtPct(lastV)}"></div>` : ""}
+        <div class="space-y-2 pt-1">
+          <div class="relative h-8 rounded-xl bg-slate-800 border border-slate-600/70 overflow-visible">
+            <div class="absolute top-0 bottom-0 rounded-lg bg-sky-500/30 border-x-2 border-sky-400" style="left:${q1L}%;width:${Math.max(2, q3R - q1L)}%" title="Zone Q1–Q3 (${cfg.q1}%–${cfg.q3}%)"></div>
+            <div class="absolute -top-2 -bottom-2 w-1 rounded-full bg-amber-300" style="left:${medP}%" title="Médiane ${cfg.med}%"></div>
+            <div class="absolute -top-2 -bottom-2 w-1 rounded-full bg-emerald-400" style="left:${refP}%" title="Référence ${cfg.ref}%"></div>
+            ${allP !== null ? `<div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-6 w-6 rounded-full bg-indigo-400 border-2 border-slate-950 shadow-md" style="left:${allP}%" title="Tous les matchs: ${fmtPct(allV)}"></div>` : ""}
+            ${lastP !== null ? `<div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-white border-2 border-indigo-600 shadow-md" style="left:${lastP}%" title="10 derniers matchs: ${fmtPct(lastV)}"></div>` : ""}
+          </div>
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <span>${cfg.min}%</span>
+            <span>${cfg.min}% – ${cfg.max}%</span>
+            <span>${cfg.max}%</span>
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 text-xs pt-1">
-          <div class="flex items-center justify-between rounded-lg bg-slate-900/90 px-2.5 py-1.5">
-            <span class="text-slate-400">Tous les matchs</span>
-            <strong class="text-indigo-300">${fmtPct(allV)}</strong>
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="rounded-xl bg-slate-950/80 border border-slate-800 p-3">
+            <div class="text-xs text-slate-400">Tous les matchs</div>
+            <div class="text-xl font-extrabold text-indigo-300 mt-0.5">${fmtPct(allV)}</div>
           </div>
-          <div class="flex items-center justify-between rounded-lg bg-slate-900/90 px-2.5 py-1.5">
-            <span class="text-slate-400">10 derniers</span>
-            <strong class="text-white">${fmtPct(lastV)}</strong>
+          <div class="rounded-xl bg-slate-950/80 border border-slate-800 p-3">
+            <div class="text-xs text-slate-400">10 derniers</div>
+            <div class="text-xl font-extrabold text-white mt-0.5">${fmtPct(lastV)}</div>
           </div>
         </div>
       </div>
@@ -1995,7 +2002,7 @@ gaPer90: { label: 'Efficacité G+A / 90 min', key: 'gaPer90', color: '#22d3ee' }
     const lastPasses = pData.passes.slice(-10);
 
     body.innerHTML = `
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         ${gaugeHtml("shots", pData.shots, lastShots)}
         ${gaugeHtml("passes", pData.passes, lastPasses)}
       </div>
